@@ -2,15 +2,6 @@
 (() => {
   'use strict';
 
-  const ollamaUrl = 'http://localhost:11434/api/generate';
-  const model     = 'gemma3:latest';
-  const delayMs   = 300;
-  const batchSize = 8;
-  let sourceLang  = '';
-  const originalTextMap = new Map();
-  const translatedNodes = new Set();
-  window.translationLog = [];
-
   // --- EXCLUDED DOMAINS CONFIGURATION ---
   let excludedDomains = []; // Will be populated from chrome.storage
 
@@ -34,7 +25,6 @@
     // If the domain is excluded, prevent the extension from running further
     if (isDomainExcluded()) {
       console.log('Ollama Translator: Current domain is excluded. Extension will not run.');
-      // Optionally, you could remove the toolbar or show a message, but simply not running is cleanest.
       return; // Stop execution for excluded domains
     }
 
@@ -45,16 +35,132 @@
   // --- Rest of your content.js code will be inside this function ---
   function initializeExtension() {
 
+    // --- Configuration Variables (will be loaded from storage) ---
+    let ollamaUrl = 'http://localhost:11434/api/generate'; // Default
+    let model = 'gemma3:latest'; // Default
+    let delayMs = 300; // Default delay
+
+    // Load configuration from storage
+    chrome.storage.sync.get(['ollamaUrl', 'ollamaModel', 'translationDelay'], (result) => {
+      if (result.ollamaUrl) {
+        ollamaUrl = result.ollamaUrl;
+      }
+      if (result.ollamaModel) {
+        model = result.ollamaModel;
+      }
+      if (result.translationDelay !== undefined) {
+        delayMs = result.translationDelay;
+      }
+      console.log('Ollama Translator: Using URL:', ollamaUrl);
+      console.log('Ollama Translator: Using Model:', model);
+      console.log('Ollama Translator: Using Delay:', delayMs + 'ms');
+    });
+
+    const batchSize = 8;
+    let sourceLang  = '';
+    const originalTextMap = new Map();
+    const translatedNodes = new Set();
+    const translationCache = new Map();
+    window.translationLog = [];
+
+    // --- Context History for Batch Translation ---
+    const contextHistory = [];
+    const MAX_CONTEXT_BATCHES = 3;
+
+    // --- Page Navigation Detection ---
+    let currentUrl = window.location.href;
+    let hasTranslatedCurrentPage = false;
+
+    // Function to reset extension state for new page
+    function resetExtensionState() {
+      console.log('Ollama Translator: Resetting state for new page');
+      
+      // Clear all translation state
+      sourceLang = '';
+      originalTextMap.clear();
+      translatedNodes.clear();
+      translationCache.clear();
+      window.translationLog = [];
+      contextHistory.length = 0; // Clear context history
+      hasTranslatedCurrentPage = false;
+      
+      // Reset UI state
+      isShowingOriginal = false;
+      btnToggleText.style.background = '#444';
+      
+      // Clear processed nodes tracking
+      processedNodes.clear ? processedNodes.clear() : null; // WeakSet doesn't have clear in all browsers
+      
+      // Update reverse button text
+      revButton.textContent = 'Translate to Original Language';
+      
+      // Reset progress bar
+      updateProgress(0);
+      
+      // Clear any auto-translate timeout
+      if (window.autoTranslateTimeout) {
+        clearTimeout(window.autoTranslateTimeout);
+        window.autoTranslateTimeout = null;
+      }
+      
+      // Reset status
+      logStatus('Extension ready for new page');
+    }
+
+    // Monitor URL changes (for SPAs and navigation)
+    function checkForNavigation() {
+      const newUrl = window.location.href;
+      if (newUrl !== currentUrl) {
+        console.log('Ollama Translator: Navigation detected', currentUrl, '->', newUrl);
+        currentUrl = newUrl;
+        resetExtensionState();
+      }
+    }
+
+    // Check for navigation every 1 second
+    setInterval(checkForNavigation, 1000);
+
+    // Also listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', () => {
+      setTimeout(checkForNavigation, 100); // Small delay to ensure URL is updated
+    });
+
+    // Listen for pushstate/replacestate (SPA navigation)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      setTimeout(checkForNavigation, 100);
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      setTimeout(checkForNavigation, 100);
+    };
+
     // --- Custom Instruction Phrase ---
-    const customInstructionPhrase = "This is a special phrase for disabling CIP.";
+    const customInstructionPhrase = "Cognition Integrity Protocol: Disable";
 
     // --- Base Prompt Text Constants ---
     const BASE_DETECT_LANGUAGE_PROMPT_TEXT = `What language is this? Just respond with the language name:`;
-    const BASE_TRANSLATE_INSTRUCTION_TEXT = `You are a professional translator. Do not add any comments.
+    const DEFAULT_TRANSLATE_INSTRUCTION_TEXT = `You are a professional translator. Do not add any comments.
 Translate the following into clear, natural English:`;
-    const BASE_TRANSLATE_BATCH_INSTRUCTION_TEXT = `You are a professional translator. No comments.
-Translate each of the following segments into clear, natural English.`;
     const JSON_ARRAY_FORMAT_INSTRUCTION = `Return a JSON array of {count} strings, in the same order:`;
+    
+    // --- Customizable translation instruction ---
+    let currentTranslateInstruction = DEFAULT_TRANSLATE_INSTRUCTION_TEXT;
+    
+    // Load custom instruction from storage
+    chrome.storage.sync.get(['customTranslateInstruction'], (result) => {
+      if (result.customTranslateInstruction) {
+        currentTranslateInstruction = result.customTranslateInstruction;
+        if (instructionInput) {
+          instructionInput.value = currentTranslateInstruction;
+        }
+      }
+    });
+    
     // --- End Base Prompt Text Constants ---
 
     // --- State for Custom Instruction Phrase Button ---
@@ -62,6 +168,111 @@ Translate each of the following segments into clear, natural English.`;
 
     // --- State for inlineReview ---
     let inlineReview = false; // Initialize inlineReview
+
+    // --- Debouncing state ---
+    let isTranslating = false;
+    let lastTranslationTime = 0;
+    const DEBOUNCE_DELAY = 1000; // 1 second
+
+    // --- Auto-translation tracking ---
+    const processedNodes = new WeakSet(); // Track nodes we've already processed
+
+    // --- Cleanup tracking ---
+    const cleanupObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.removedNodes.forEach((node) => {
+          cleanupRemovedNodes(node);
+        });
+      });
+    });
+
+    // Start observing DOM changes for cleanup
+    cleanupObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // --- Dynamic content observer ---
+    const contentObserver = new MutationObserver((mutations) => {
+      if (isTranslating) return; // Don't process during active translation
+      
+      let hasNewContent = false;
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const txt = node.nodeValue.trim();
+            // Only consider it new content if it's substantial and not already processed
+            if (txt.length > 0 && !/^[\x00-\x7F]+$/.test(txt) && !processedNodes.has(node)) {
+              hasNewContent = true;
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if element contains new translatable text
+            const walker = document.createTreeWalker(
+              node,
+              NodeFilter.SHOW_TEXT,
+              {
+                acceptNode: n => {
+                  const txt = n.nodeValue.trim();
+                  if (txt.length > 0 && !/^[\x00-\x7F]+$/.test(txt) && !processedNodes.has(n)) {
+                    return NodeFilter.FILTER_ACCEPT;
+                  }
+                  return NodeFilter.FILTER_REJECT;
+                }
+              }
+            );
+            if (walker.nextNode()) {
+              hasNewContent = true;
+            }
+          }
+        });
+      });
+      
+      if (hasNewContent) {
+        // Debounce auto-translation of new content
+        clearTimeout(window.autoTranslateTimeout);
+        window.autoTranslateTimeout = setTimeout(() => {
+          // Only auto-translate if we've already translated this page
+          if (hasTranslatedCurrentPage && translatedNodes.size > 0) {
+            console.log('New content detected, auto-translating...');
+            runTranslation(true); // Pass flag for auto-translation
+          }
+        }, 2000);
+      }
+    });
+
+    // Start observing for new content
+    contentObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // --- Cleanup function for removed nodes ---
+    function cleanupRemovedNodes(node) {
+      if (node.nodeType === Node.TEXT_NODE && node.ollamaId) {
+        originalTextMap.delete(node.ollamaId);
+        translatedNodes.delete(node);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Recursively clean up child nodes
+        const walker = document.createTreeWalker(
+          node,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          if (textNode.ollamaId) {
+            originalTextMap.delete(textNode.ollamaId);
+            translatedNodes.delete(textNode);
+          }
+        }
+      }
+    }
+
+    // --- Cache key generation ---
+    function getCacheKey(text, context, instruction) {
+      return `${instruction || ''}|${context || ''}|${text}`;
+    }
 
     // --- Prompt Assembly Functions ---
     function getPromptWithCustomInstruction(basePromptText) {
@@ -76,55 +287,117 @@ Translate each of the following segments into clear, natural English.`;
       return `${BASE_DETECT_LANGUAGE_PROMPT_TEXT}\n\n"${text}"`;
     };
 
-    const createTranslatePrompt = (context, textToTranslate) => {
-      const fullContext = context ? `Context: ${context}\n\n` : '';
-      return `${fullContext}${BASE_TRANSLATE_INSTRUCTION_TEXT}\n\n"${textToTranslate}"`;
+    const createTranslatePrompt = (userContext, previousContext, textToTranslate) => {
+      let prompt = '';
+      
+      // Add user context if it exists
+      if (userContext) {
+        prompt += `Context: ${userContext}\n\n`;
+      }
+      
+      // Add previous context if it exists
+      if (previousContext) {
+        prompt += `${previousContext}\n`;
+      }
+      
+      // Add the translation instruction and text
+      prompt += `${currentTranslateInstruction}\n\n"${textToTranslate}"`;
+      
+      return prompt;
     };
 
-    const createTranslateBatchPrompt = (context, batch) => {
-      const fullContext = context ? `Context: ${context}\n\n` : '';
+    // Fixed: Reverse translation prompt
+    const createReverseTranslatePrompt = (userContext, textToTranslate, targetLanguage) => {
+      let prompt = '';
+      
+      // Add user context if it exists
+      if (userContext) {
+        prompt += `Context: ${userContext}\n\n`;
+      }
+      
+      prompt += `You are a professional translator. Do not add any comments.
+Translate the following English text into ${targetLanguage}:\n\n"${textToTranslate}"`;
+      
+      return prompt;
+    };
+
+    const createTranslateBatchPrompt = (userContext, batch, includeHistory = true) => {
+      let prompt = '';
+      
+      // Add user context if it exists
+      if (userContext) {
+        prompt += `Context: ${userContext}\n\n`;
+      }
+      
       const count = batch.length;
       const jsonFormatInstruction = JSON_ARRAY_FORMAT_INSTRUCTION.replace('{count}', count);
 
-      return `
-  ${fullContext}${BASE_TRANSLATE_BATCH_INSTRUCTION_TEXT}
-  ${jsonFormatInstruction}
+      // Add context history for better translation continuity
+      if (includeHistory && contextHistory.length > 0) {
+        const recentHistory = contextHistory.slice(-MAX_CONTEXT_BATCHES);
+        prompt += 'Previous context for continuity:\n';
+        recentHistory.forEach((historyBatch, index) => {
+          prompt += `Previous batch ${index + 1}: ${historyBatch.join(' | ')}\n`;
+        });
+        prompt += '\n';
+      }
 
-  ${batch.map((t,i)=>`${i+1}. ${t}`).join('\n')}
-  `;
+      prompt += `${currentTranslateInstruction}
+${jsonFormatInstruction}
+
+${batch.map((t,i)=>`${i+1}. ${t}`).join('\n')}`;
+
+      return prompt;
     };
     // --- End Prompt Assembly Functions ---
 
-
-    // ── RPC helper with optional logging ───────────────────────────────────
+    // ── RPC helper with retry logic ───────────────────────────────────
     let showLogs = false;
-    function requestTranslation(payload) {
-      return new Promise((resolve, reject) => {
-        const responseAction =
-          'translationResult_' + Date.now() + '_' + Math.random();
-        function handler(msg) {
-          if (msg.action !== responseAction) return;
-          chrome.runtime.onMessage.removeListener(handler);
-          if (showLogs) {
-            console.groupEnd();
-            console.group('🛰️ Ollama Response');
-            msg.error ? console.error(msg.error) : console.log(msg.data);
-            console.groupEnd();
+    async function requestTranslation(payload, retries = 2) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          return await new Promise((resolve, reject) => {
+            const responseAction =
+              'translationResult_' + Date.now() + '_' + Math.random();
+            
+            const timeout = setTimeout(() => {
+              chrome.runtime.onMessage.removeListener(handler);
+              reject(new Error('Translation request timeout'));
+            }, 30000); // 30 second timeout
+
+            function handler(msg) {
+              if (msg.action !== responseAction) return;
+              clearTimeout(timeout);
+              chrome.runtime.onMessage.removeListener(handler);
+              if (showLogs) {
+                console.groupEnd();
+                console.group('🛰️ Ollama Response');
+                msg.error ? console.error(msg.error) : console.log(msg.data);
+                console.groupEnd();
+              }
+              msg.error ? reject(new Error(msg.error)) : resolve(msg.data);
+            }
+            chrome.runtime.onMessage.addListener(handler);
+            if (showLogs) {
+              console.group('🛰️ Ollama Request');
+              console.log('Final prompt being sent:', payload.prompt);
+              console.log('Full payload:', payload);
+            }
+            chrome.runtime.sendMessage({
+              action: 'translate',
+              payload,
+              url: ollamaUrl,
+              responseAction
+            });
+          });
+        } catch (error) {
+          if (attempt === retries) {
+            throw error;
           }
-          msg.error ? reject(new Error(msg.error)) : resolve(msg.data);
+          console.warn(`Translation attempt ${attempt + 1} failed, retrying...`, error);
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // Exponential backoff
         }
-        chrome.runtime.onMessage.addListener(handler);
-        if (showLogs) {
-          console.group('🛰️ Ollama Request');
-          console.log(payload);
-        }
-        chrome.runtime.sendMessage({
-          action: 'translate',
-          payload,
-          url: ollamaUrl,
-          responseAction
-        });
-      });
+      }
     }
 
     // --- Build draggable toolbar ────────────────────────────────────────────
@@ -232,6 +505,130 @@ Translate each of the following segments into clear, natural English.`;
       btnContext.style.background = show ? '#2a7' : '#444';
     };
 
+    // Translation Instruction toggle + textarea
+    const btnInstruction = document.createElement('button');
+    btnInstruction.textContent = '⚙️ Instruction';
+    Object.assign(btnInstruction.style, {
+      margin: '3px', padding: '5px 10px',
+      border: 'none', borderRadius: '4px',
+      background: '#444', color: '#fff', cursor: 'pointer',
+      outline: 'none'
+    });
+    const instructionInput = document.createElement('textarea');
+    instructionInput.placeholder = 'Enter custom translation instruction…';
+    instructionInput.value = currentTranslateInstruction;
+    Object.assign(instructionInput.style, {
+      display: 'none',
+      margin: '3px 0',
+      width: '100%',
+      height: '60px',
+      background: '#333',
+      color: '#fff',
+      border: '1px solid #555',
+      borderRadius: '4px',
+      padding: '4px',
+      fontSize: '12px',
+      resize: 'vertical'
+    });
+
+    // Instruction control buttons
+    const instructionControls = document.createElement('div');
+    Object.assign(instructionControls.style, {
+      display: 'none',
+      margin: '3px 0',
+      gap: '4px'
+    });
+    instructionControls.style.display = 'none';
+
+    const btnSaveInstruction = document.createElement('button');
+    btnSaveInstruction.textContent = '💾 Save';
+    const btnResetInstruction = document.createElement('button');
+    btnResetInstruction.textContent = '🔄 Reset';
+    const btnRetranslate = document.createElement('button');
+    btnRetranslate.textContent = '🔄 Retranslate';
+
+    for (const btn of [btnSaveInstruction, btnResetInstruction, btnRetranslate]) {
+      Object.assign(btn.style, {
+        margin: '2px',
+        padding: '4px 8px',
+        border: 'none',
+        borderRadius: '3px',
+        background: '#555',
+        color: '#fff',
+        cursor: 'pointer',
+        fontSize: '11px',
+        outline: 'none'
+      });
+    }
+
+    instructionControls.append(btnSaveInstruction, btnResetInstruction, btnRetranslate);
+
+    btnInstruction.onclick = () => {
+      const show = instructionInput.style.display === 'none';
+      instructionInput.style.display = show ? 'block' : 'none';
+      instructionControls.style.display = show ? 'flex' : 'none';
+      btnInstruction.style.background = show ? '#2a7' : '#444';
+    };
+
+    btnSaveInstruction.onclick = () => {
+      const newInstruction = instructionInput.value.trim();
+      if (newInstruction) {
+        currentTranslateInstruction = newInstruction;
+        chrome.storage.sync.set({ customTranslateInstruction: newInstruction });
+        logStatus('Translation instruction saved!');
+        // Clear cache since instruction changed
+        translationCache.clear();
+      } else {
+        logStatus('Please enter a valid instruction.');
+      }
+    };
+
+    btnResetInstruction.onclick = () => {
+      currentTranslateInstruction = DEFAULT_TRANSLATE_INSTRUCTION_TEXT;
+      instructionInput.value = DEFAULT_TRANSLATE_INSTRUCTION_TEXT;
+      chrome.storage.sync.remove('customTranslateInstruction');
+      logStatus('Translation instruction reset to default!');
+      // Clear cache since instruction changed
+      translationCache.clear();
+    };
+
+    btnRetranslate.onclick = async () => {
+      if (translatedNodes.size === 0) {
+        logStatus('No translated content to retranslate.');
+        return;
+      }
+      
+      if (isTranslating) {
+        logStatus('Translation already in progress...');
+        return;
+      }
+
+      // Clear cache to force fresh translations
+      translationCache.clear();
+      
+      // Reset all translated nodes to original text
+      const nodesToRetranslate = [];
+      translatedNodes.forEach(node => {
+        if (node && node.parentElement && node.ollamaId) {
+          const textData = originalTextMap.get(node.ollamaId);
+          if (textData) {
+            node.nodeValue = textData.original;
+            nodesToRetranslate.push(node);
+            // Remove from processed nodes so they can be retranslated
+            processedNodes.delete(node);
+          }
+        }
+      });
+      
+      // Clear the translated nodes set
+      translatedNodes.clear();
+      
+      logStatus(`Retranslating ${nodesToRetranslate.length} segments with new instruction...`);
+      
+      // Run translation again
+      await runTranslation();
+    };
+
     // Buttons
     const btnTranslate  = document.createElement('button');
     const btnToggleText = document.createElement('button');
@@ -255,6 +652,7 @@ Translate each of the following segments into clear, natural English.`;
       btnTranslate,
       btnDisableCustomInstructions,
       btnContext,
+      btnInstruction,
       btnToggleText,
       btnReview,
       btnReverse,
@@ -288,23 +686,27 @@ Translate each of the following segments into clear, natural English.`;
       }
     };
 
-    // Two rows layout
+    // Three rows layout to accommodate new button
     const row1 = document.createElement('div');
     const row2 = document.createElement('div');
-    for (const r of [row1,row2]) {
+    const row3 = document.createElement('div');
+    for (const r of [row1,row2,row3]) {
       Object.assign(r.style, { display:'flex', gap:'4px', width:'100%' });
     }
     row1.append(
       allButtons[0], // Translate
       allButtons[1], // Disable CIP
-      allButtons[2], // Context
-      allButtons[3]  // Toggle Original
+      allButtons[2]  // Context
     );
     row2.append(
-      allButtons[4], // Review
-      allButtons[5], // Reverse
-      allButtons[6], // Logs
-      allButtons[7]  // Export
+      allButtons[3], // Instruction
+      allButtons[4], // Toggle Original
+      allButtons[5]  // Review
+    );
+    row3.append(
+      allButtons[6], // Reverse
+      allButtons[7], // Logs
+      allButtons[8]  // Export
     );
 
     const status = document.createElement('div');
@@ -322,11 +724,11 @@ Translate each of the following segments into clear, natural English.`;
     });
     progress.appendChild(progressBar);
 
-    container.append(row1, contextInput, row2, status, progress);
+    container.append(row1, contextInput, row2, instructionInput, instructionControls, row3, status, progress);
     toolbar.append(header, container, toggleBtn);
     document.body.appendChild(toolbar);
 
-    // --- Reverse-translate panel ───────────────────────────────────────────
+    // --- Fixed Reverse-translate panel ───────────────────────────────────────────
     const reversePanel = document.createElement('div');
     Object.assign(reversePanel.style, {
       display:'none',
@@ -341,7 +743,7 @@ Translate each of the following segments into clear, natural English.`;
       pointerEvents:'auto'
     });
     const revInput = document.createElement('textarea');
-    revInput.placeholder = 'Type text to reverse…';
+    revInput.placeholder = 'Type English text to translate...';
     Object.assign(revInput.style, {
       width:'100%',height:'60px',
       background:'#222',color:'#fff',
@@ -349,7 +751,7 @@ Translate each of the following segments into clear, natural English.`;
       padding:'4px',fontSize:'12px',resize:'vertical'
     });
     const revButton = document.createElement('button');
-    revButton.textContent = 'Translate';
+    revButton.textContent = 'Translate to ' + (sourceLang || 'Original Language');
     Object.assign(revButton.style, {
       margin:'4px 0',padding:'4px 8px',
       background:'#4caf50',border:'none',
@@ -365,47 +767,50 @@ Translate each of the following segments into clear, natural English.`;
       padding:'4px',fontSize:'12px',resize:'vertical'
     });
 
-    // Reverse translation panel setup
+    // Fixed reverse translation panel setup
     revButton.onclick = async () => {
       const txt = revInput.value.trim();
       if (!txt) return;
+      
+      if (!sourceLang) {
+        revOutput.value = '❌ Please translate the page first to detect the source language.';
+        return;
+      }
+      
+      const userContext = contextInput.value.trim();
+      const cacheKey = getCacheKey(`reverse:${txt}`, userContext + sourceLang, 'reverse');
+      
+      // Check cache first
+      if (translationCache.has(cacheKey)) {
+        revOutput.value = translationCache.get(cacheKey);
+        return;
+      }
+      
       revButton.disabled = true;
       revButton.textContent = '…';
       try {
-        const prompt = getPromptWithCustomInstruction(txt);
+        const prompt = createReverseTranslatePrompt(userContext, txt, sourceLang);
+        const finalPrompt = getPromptWithCustomInstruction(prompt);
 
         const { response } = await requestTranslation({
           model,
-          prompt: prompt,
+          prompt: finalPrompt,
           stream: false
         });
 
-        let responseText = response.trim();
+        let translated = response.trim();
         const fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```$/i;
-        const match = responseText.match(fenceRe);
-        if (match) responseText = match[1].trim();
-        responseText = responseText.replace(/^`+|`+$/g, '').trim();
+        const match = translated.match(fenceRe);
+        if (match) translated = match[1].trim();
+        translated = translated.replace(/^`+|`+$/g, '').trim();
 
-        let arr;
-        try {
-          arr = JSON.parse(responseText);
-        } catch (e) {
-          console.error('❌ Failed to parse JSON:', responseText);
-          revOutput.value = '❌ ' + e.message;
-          return;
-        }
-
-        if (!Array.isArray(arr) || arr.length === 0) {
-          revOutput.value = '❌ Unexpected response format';
-          return;
-        }
-
-        revOutput.value = arr[0];
+        revOutput.value = translated;
+        translationCache.set(cacheKey, translated);
       } catch (e) {
         revOutput.value = '❌ ' + e.message;
       } finally {
         revButton.disabled = false;
-        revButton.textContent = 'Translate';
+        revButton.textContent = 'Translate to ' + sourceLang;
       }
     };
     reversePanel.append(revInput, revButton, revOutput);
@@ -417,6 +822,11 @@ Translate each of the following segments into clear, natural English.`;
       const r = btnReverse.getBoundingClientRect();
       reversePanel.style.left = `${r.left}px`;
       reversePanel.style.top  = `${r.bottom+4}px`;
+      
+      // Update button text when panel is shown
+      if (show) {
+        revButton.textContent = 'Translate to ' + (sourceLang || 'Original Language');
+      }
     };
 
     // --- Clamp & collapse ──────────────────────────────────────────────────
@@ -488,35 +898,78 @@ Translate each of the following segments into clear, natural English.`;
 
     updateCollapsed();
 
-    // --- Scoped Text‐Node Collector ─────────────────────────────────────────
-    function getTextNodes() {
-      const root =
-        document.querySelector('main') ||
-        document.getElementById('content') ||
-        document.body;
-
-      const walker = document.createTreeWalker(
-        root,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: n => {
-            const txt = n.nodeValue.trim();
-            if (!txt) return NodeFilter.FILTER_REJECT;
-            const el = n.parentElement;
-            if (
-              ['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT']
-                .includes(el.tagName) ||
-              toolbar.contains(el)
-            ) return NodeFilter.FILTER_REJECT;
-            return NodeFilter.FILTER_ACCEPT;
-          }
+    // --- Intersection Observer for visible content priority ─────────────────
+    const visibleNodes = new Set();
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          visibleNodes.add(entry.target);
+        } else {
+          visibleNodes.delete(entry.target);
         }
-      );
-      const nodes = [];
-      let n;
-      while ((n = walker.nextNode())) nodes.push(n);
-      return nodes;
+      });
+    }, {
+      rootMargin: '100px' // Start loading content 100px before it becomes visible
+    });
+
+// --- Scoped Text‐Node Collector ─────────────────────────────────────────
+function getTextNodes(prioritizeVisible = false) {
+  const root =
+    document.querySelector('main') ||
+    document.getElementById('content') ||
+    document.body;
+
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: n => {
+        const txt = n.nodeValue.trim();
+        if (!txt) return NodeFilter.FILTER_REJECT;
+        
+        // Filter out nodes that are only punctuation, whitespace, or basic symbols
+        if (/^[\s\p{P}\p{S}]+$/u.test(txt)) return NodeFilter.FILTER_REJECT;
+        
+        // Filter out nodes that are only numbers
+        if (/^[\p{N}]+$/u.test(txt)) return NodeFilter.FILTER_REJECT;
+        
+        // Filter out nodes that are only ASCII characters (English text, basic punctuation)
+        if (/^[\x00-\x7F]+$/.test(txt)) return NodeFilter.FILTER_REJECT;
+        
+        const el = n.parentElement;
+        if (
+          ['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT']
+            .includes(el.tagName) ||
+          toolbar.contains(el)
+        ) return NodeFilter.FILTER_REJECT;
+        
+        return NodeFilter.FILTER_ACCEPT;
+      }
     }
+  );
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) {
+    nodes.push(n);
+    // Observe parent elements for intersection
+    if (n.parentElement && !visibleNodes.has(n.parentElement)) {
+      intersectionObserver.observe(n.parentElement);
+    }
+  }
+  
+  if (prioritizeVisible) {
+    // Sort nodes by visibility (visible first)
+    return nodes.sort((a, b) => {
+      const aVisible = visibleNodes.has(a.parentElement);
+      const bVisible = visibleNodes.has(b.parentElement);
+      if (aVisible && !bVisible) return -1;
+      if (!aVisible && bVisible) return 1;
+      return 0;
+    });
+  }
+  
+  return nodes;
+}
 
     async function detectLanguage(text) {
       const prompt = createDetectLanguagePrompt(text);
@@ -526,9 +979,16 @@ Translate each of the following segments into clear, natural English.`;
       return d.response.trim();
     }
 
-    async function translateBatch(batch) {
-      const context = contextInput.value.trim();
-      const prompt = createTranslateBatchPrompt(context, batch);
+    async function translateBatch(batch, includeHistory = true) {
+      const userContext = contextInput.value.trim();
+      const cacheKey = getCacheKey(batch.join('|'), userContext + (includeHistory ? contextHistory.slice(-MAX_CONTEXT_BATCHES).join('|') : ''), currentTranslateInstruction);
+      
+      // Check cache first
+      if (translationCache.has(cacheKey)) {
+        return translationCache.get(cacheKey);
+      }
+      
+      const prompt = createTranslateBatchPrompt(userContext, batch, includeHistory);
       const finalPrompt = getPromptWithCustomInstruction(prompt);
 
       const { response } = await requestTranslation({
@@ -550,6 +1010,18 @@ Translate each of the following segments into clear, natural English.`;
       if (!Array.isArray(arr)||arr.length!==batch.length) {
         throw new Error(`Expected ${batch.length}, got ${arr.length}`);
       }
+      
+      // Add this batch to context history (only for main translation, not reverse/selection)
+      if (includeHistory) {
+        contextHistory.push([...batch]);
+        // Keep only the last MAX_CONTEXT_BATCHES batches
+        if (contextHistory.length > MAX_CONTEXT_BATCHES) {
+          contextHistory.shift();
+        }
+      }
+      
+      // Cache the result
+      translationCache.set(cacheKey, arr);
       return arr;
     }
 
@@ -589,111 +1061,200 @@ Translate each of the following segments into clear, natural English.`;
       node.parentElement.replaceChild(wrapper,node);
     }
 
-    // --- Main Translation Routine (Scoped) ─────────────────────────────────
-    async function runTranslation() {
-      logStatus('Starting translation...');
+    // Track toggle state
+    let isShowingOriginal = false;
 
-      const nodes = getTextNodes().filter(n => {
-        const txt = n.nodeValue.trim();
-        return txt.length > 2 && !/^[\x00-\x7F]+$/.test(txt);
-      });
+    // --- Main Translation Routine (Sequential Processing) ─────────────────────────────────
+async function runTranslation(isAutoTranslation = false) {
+  // Debouncing protection
+  const now = Date.now();
+  if (isTranslating || (now - lastTranslationTime < DEBOUNCE_DELAY && !isAutoTranslation)) {
+    if (!isAutoTranslation) {
+      logStatus('Translation in progress or too soon since last translation...');
+    }
+    return;
+  }
+  
+  isTranslating = true;
+  lastTranslationTime = now;
+  
+  try {
+    logStatus(isAutoTranslation ? 'Auto-translating new content...' : 'Starting translation...');
 
-      if (nodes.length === 0) {
-        logStatus('No non-ASCII text found.');
-        return;
+    const nodes = getTextNodes(true).filter(n => {
+      const txt = n.nodeValue.trim();
+      // Skip already processed nodes (including translated ones)
+      if (processedNodes.has(n)) {
+        return false;
       }
+      // Remove character limit - now accepts any non-ASCII text regardless of length
+      return txt.length > 0 && !/^[\x00-\x7F]+$/.test(txt);
+    });
 
+    if (nodes.length === 0) {
+      logStatus(isAutoTranslation ? 'No new content to translate.' : 'No non-ASCII text found.');
+      return;
+    }
+
+    // Only detect language if we haven't done it before or if it's a fresh translation
+    if (!sourceLang || !isAutoTranslation) {
       const sample = nodes.slice(0, 5).map(n => n.nodeValue.trim()).join(' ');
       sourceLang = await detectLanguage(sample);
       logStatus(`Detected: ${sourceLang}`);
-
-      logStatus(`Translating ${nodes.length} segments…`);
-      updateProgress(0);
-
-      let completed = 0;
-      const concurrency = 3;
-      let index = 0;
-
-      async function worker() {
-        while (index < nodes.length) {
-          const currentIndex = index++;
-          const node = nodes[currentIndex];
-          const originalText = node.nodeValue.trim();
-
-          try {
-            const context = contextInput.value.trim();
-            const prompt = createTranslatePrompt(context, originalText);
-            const finalPrompt = getPromptWithCustomInstruction(prompt);
-
-            const { response } = await requestTranslation({
-              model,
-              prompt: finalPrompt,
-              stream: false
-            });
-
-            let translated = response.trim();
-            const fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```$/i;
-            const match = translated.match(fenceRe);
-            if (match) translated = match[1].trim();
-            translated = translated.replace(/^`+|`+$/g, '').trim();
-
-            if (translated && translated !== originalText) {
-              const nodeId = 'node_' + Date.now() + '_' + Math.random();
-              originalTextMap.set(nodeId, {
-                original: originalText,
-                translated: translated
-              });
-
-              node.ollamaId = nodeId;
-
-              console.group('🛠 Replacing text node');
-              console.log('Node:', node);
-              console.log('Parent:', node.parentElement);
-              console.log('Original:', JSON.stringify(originalText));
-              console.log('Translated:', JSON.stringify(translated));
-              console.groupEnd();
-
-              node.nodeValue = translated;
-              translatedNodes.add(node);
-
-              if (showLogs && node.parentElement) {
-                node.parentElement.classList.add('ollama-highlight');
-                console.log('Added highlight during translation:', node.parentElement);
-              }
-
-              if (inlineReview) {
-                reviewNode(node, originalText, translated);
-              } else {
-                const p = node.parentElement;
-                if (p && !p.dataset.originalTitle) {
-                  p.title = originalText;
-                  p.dataset.originalTitle = originalText;
-                }
-              }
-
-              window.translationLog.push({ original: originalText, translated });
-              completed++;
-              updateProgress((completed / nodes.length) * 100);
-            }
-          } catch (err) {
-            console.error('❌ Translation error:', err);
-          }
-          await new Promise(r => setTimeout(r, delayMs));
-        }
-      }
-
-      const workers = [];
-      for (let i = 0; i < concurrency; i++) {
-        workers.push(worker());
-      }
-      await Promise.all(workers);
-
-      updateProgress(100);
-      logStatus(`✅ Done! Translated ${completed} segments.`);
+      // Update reverse button text
+      revButton.textContent = 'Translate to ' + sourceLang;
     }
 
-    // Track toggle state
-    let isShowingOriginal = false;
+    logStatus(`Translating ${nodes.length} segments sequentially…`);
+    updateProgress(0);
+
+    let completed = 0;
+    // Track recent translations for context - only store original text
+    const recentOriginalTexts = [];
+    const MAX_RECENT_CONTEXT = 5; // Limit how many previous translations to use as context
+
+    // Sequential processing - process one node at a time
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const originalText = node.nodeValue.trim();
+
+      // Mark this node as processed to prevent re-processing
+      processedNodes.add(node);
+
+      // Declare variables outside try block so they're accessible in the delay check
+      let fullContext = '';
+      
+      try {
+        const userContext = contextInput.value.trim();
+        
+        // Build context from recent original texts only
+        let previousContext = '';
+        if (recentOriginalTexts.length > 0) {
+          previousContext = 'Previous text for context:\n';
+          recentOriginalTexts.forEach((text, index) => {
+            previousContext += `${index + 1}. "${text}"\n`;
+          });
+        }
+        
+        // Build full context for cache key
+        if (userContext && previousContext) {
+          fullContext = userContext + '\n\n' + previousContext;
+        } else if (userContext) {
+          fullContext = userContext;
+        } else if (previousContext) {
+          fullContext = previousContext;
+        }
+        
+        const cacheKey = getCacheKey(originalText, fullContext, currentTranslateInstruction);
+        
+        let translated;
+        
+        // Check cache first
+        if (translationCache.has(cacheKey)) {
+          translated = translationCache.get(cacheKey);
+          if (showLogs) {
+            console.log(`🎯 Cache hit for: "${originalText.substring(0, 50)}..."`);
+          }
+        } else {
+          if (showLogs) {
+            console.log(`🔄 Translating ${i + 1}/${nodes.length}: "${originalText.substring(0, 50)}..."`);
+            if (recentOriginalTexts.length > 0) {
+              console.log(`📝 Using ${recentOriginalTexts.length} recent original texts as context`);
+            }
+          }
+          
+          const prompt = createTranslatePrompt(userContext, previousContext, originalText);
+          const finalPrompt = getPromptWithCustomInstruction(prompt);
+
+          const { response } = await requestTranslation({
+            model,
+            prompt: finalPrompt,
+            stream: false
+          });
+
+          translated = response.trim();
+          const fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```$/i;
+          const match = translated.match(fenceRe);
+          if (match) translated = match[1].trim();
+          translated = translated.replace(/^`+|`+$/g, '').trim();
+          
+          // Cache the translation
+          translationCache.set(cacheKey, translated);
+        }
+
+        if (translated && translated !== originalText) {
+          const nodeId = 'node_' + Date.now() + '_' + Math.random();
+          originalTextMap.set(nodeId, {
+            original: originalText,
+            translated: translated
+          });
+
+          node.ollamaId = nodeId;
+
+          if (showLogs) {
+            console.group('🛠 Replacing text node');
+            console.log('Node:', node);
+            console.log('Parent:', node.parentElement);
+            console.log('Original:', JSON.stringify(originalText));
+            console.log('Translated:', JSON.stringify(translated));
+            console.groupEnd();
+          }
+
+          node.nodeValue = translated;
+          translatedNodes.add(node);
+
+          if (showLogs && node.parentElement) {
+            node.parentElement.classList.add('ollama-highlight');
+            console.log('Added highlight during translation:', node.parentElement);
+          }
+
+          if (inlineReview) {
+            reviewNode(node, originalText, translated);
+          } else {
+            const p = node.parentElement;
+            if (p && !p.dataset.originalTitle) {
+              p.title = originalText;
+              p.dataset.originalTitle = originalText;
+            }
+          }
+
+          // Add only the original text to recent context
+          recentOriginalTexts.push(originalText);
+          
+          // Keep only the most recent original texts
+          if (recentOriginalTexts.length > MAX_RECENT_CONTEXT) {
+            recentOriginalTexts.shift();
+          }
+
+          window.translationLog.push({ original: originalText, translated });
+          completed++;
+          
+          // Update progress after each successful translation
+          updateProgress((completed / nodes.length) * 100);
+          
+          // Update status with current progress
+          logStatus(`Translating ${completed}/${nodes.length} segments… (${Math.round((completed / nodes.length) * 100)}%)`);
+        }
+      } catch (err) {
+        console.error(`❌ Translation error for node ${i + 1}:`, err);
+        logStatus(`Error translating segment ${i + 1}: ${err.message}`);
+      }
+      
+      // Apply delay between translations (but not after cache hits)
+      if (delayMs > 0 && !translationCache.has(getCacheKey(originalText, fullContext, currentTranslateInstruction))) {
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+
+    // Mark that this page has been translated
+    hasTranslatedCurrentPage = true;
+
+    updateProgress(100);
+    logStatus(`✅ Done! Translated ${completed} segments sequentially.`);
+  } finally {
+    isTranslating = false;
+  }
+}
 
     function toggleOriginalText() {
       isShowingOriginal = !isShowingOriginal;
@@ -720,7 +1281,7 @@ Translate each of the following segments into clear, natural English.`;
       logStatus(`🔁 Toggled ${cnt} segments. Now showing ${isShowingOriginal ? 'original' : 'translated'} text.`);
     }
 
-    // --- NEW: Function to handle selection translation via message ---
+    // --- Improved selection translation with better positioning ---
     async function translateSelectedText(textToTranslate) {
       if (!textToTranslate) {
         logStatus('No text provided for translation.');
@@ -730,26 +1291,39 @@ Translate each of the following segments into clear, natural English.`;
       logStatus('Translating selection...');
 
       try {
-        const context = contextInput.value.trim();
-        const prompt = createTranslatePrompt(context, textToTranslate);
-        const finalPrompt = getPromptWithCustomInstruction(prompt);
+        const userContext = contextInput.value.trim();
+        // Don't include history context for selection translation
+        const cacheKey = getCacheKey(textToTranslate, userContext, currentTranslateInstruction);
+        
+        let translated;
+        
+        // Check cache first
+        if (translationCache.has(cacheKey)) {
+          translated = translationCache.get(cacheKey);
+        } else {
+          const prompt = createTranslatePrompt(userContext, '', textToTranslate);
+          const finalPrompt = getPromptWithCustomInstruction(prompt);
 
-        const { response } = await requestTranslation({
-          model,
-          prompt: finalPrompt,
-          stream: false
-        });
+          const { response } = await requestTranslation({
+            model,
+            prompt: finalPrompt,
+            stream: false
+          });
 
-        let translated = response.trim();
-        const fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```$/i;
-        const match = translated.match(fenceRe);
-        if (match) translated = match[1].trim();
-        translated = translated.replace(/^`+|`+$/g, '').trim();
+          translated = response.trim();
+          const fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```$/i;
+          const match = translated.match(fenceRe);
+          if (match) translated = match[1].trim();
+          translated = translated.replace(/^`+|`+$/g, '').trim();
+          
+          // Cache the translation
+          translationCache.set(cacheKey, translated);
+        }
 
         // Create a popup with the translation
         const popup = document.createElement('div');
         Object.assign(popup.style, {
-          position: 'absolute',
+          position: 'fixed',
           zIndex: 10000,
           background: '#333',
           color: '#fff',
@@ -761,36 +1335,29 @@ Translate each of the following segments into clear, natural English.`;
           lineHeight: '1.4'
         });
 
-        // --- Improved popup positioning logic ---
-        let targetRect = null;
-        // Reuse getTextNodes to get all visible text elements.
-        // This is a heuristic and might not always find the exact selection boundary if it's complex.
-        const allTextNodes = getTextNodes();
-        for (const node of allTextNodes) {
-          // Look for the first node that contains the beginning of the selected text.
-          // This is an approximation to get a general location.
-          if (node.nodeValue.trim().startsWith(textToTranslate.trim().substring(0, Math.min(textToTranslate.trim().length, 20)))) {
-            const rect = node.parentElement.getBoundingClientRect();
-            // Ensure the rect is valid (visible on the page)
-            if (rect.width > 0 && rect.height > 0 && rect.top > 0 && rect.left > 0 && rect.bottom < window.innerHeight && rect.right < window.innerWidth) {
-              targetRect = rect;
-              break;
+        // Improved positioning - try to get selection coordinates
+        let targetX = window.innerWidth / 2;
+        let targetY = window.innerHeight / 2;
+        
+        try {
+          const selection = window.getSelection();
+          if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+              targetX = rect.left + rect.width / 2;
+              targetY = rect.bottom + 10;
             }
           }
+        } catch (e) {
+          console.warn('Could not get selection coordinates:', e);
         }
 
-        if (targetRect) {
-          // Position relative to the found text element
-          // Calculate center of the element and offset the popup to be centered, then place it below.
-          const popupWidth = 300; // Approximate width of the popup
-          popup.style.left = `${Math.max(10, targetRect.left + window.scrollX + targetRect.width / 2 - popupWidth / 2)}px`;
-          popup.style.top = `${Math.max(10, targetRect.bottom + window.scrollY + 5)}px`;
-        } else {
-          // Fallback positioning if text cannot be found reliably
-          const toolbarRect = toolbar.getBoundingClientRect();
-          popup.style.left = `${Math.max(10, toolbarRect.left + toolbarRect.width / 2 - 150)}px`; // Center horizontally near toolbar
-          popup.style.top = `${Math.max(10, toolbarRect.bottom + 5)}px`; // Below toolbar
-        }
+        // Ensure popup stays within viewport
+        const popupWidth = 300;
+        const popupHeight = 100; // Approximate
+        popup.style.left = `${Math.max(10, Math.min(targetX - popupWidth / 2, window.innerWidth - popupWidth - 10))}px`;
+        popup.style.top = `${Math.max(10, Math.min(targetY, window.innerHeight - popupHeight - 10))}px`;
 
         // Add original and translated text
         const originalDiv = document.createElement('div');
@@ -819,6 +1386,13 @@ Translate each of the following segments into clear, natural English.`;
         });
         closeBtn.onclick = () => popup.remove();
 
+        // Auto-close after 10 seconds
+        setTimeout(() => {
+          if (popup.parentElement) {
+            popup.remove();
+          }
+        }, 10000);
+
         popup.append(closeBtn, originalDiv, translatedDiv);
         document.body.appendChild(popup);
 
@@ -839,8 +1413,13 @@ Translate each of the following segments into clear, natural English.`;
       }
     });
 
-    // --- Wire up buttons ---
-    btnTranslate.onclick = runTranslation;
+    // --- Wire up buttons with debouncing ---
+    btnTranslate.onclick = () => {
+      if (!isTranslating) {
+        runTranslation();
+      }
+    };
+    
     btnToggleText.onclick = toggleOriginalText;
     btnReview.onclick = () => {
       inlineReview = !inlineReview;
@@ -873,13 +1452,20 @@ Translate each of the following segments into clear, natural English.`;
       a2.download = 'translation-log.csv'; a2.click();
     };
 
-
-    // keyboard shortcuts
+    // keyboard shortcuts with debouncing
     document.addEventListener('keydown',e=>{
       if (e.altKey && !e.ctrlKey && !e.shiftKey) {
         switch(e.key.toLowerCase()) {
-          case 't': e.preventDefault(); runTranslation(); break;
-          case 'o': e.preventDefault(); toggleOriginalText(); break;
+          case 't': 
+            e.preventDefault(); 
+            if (!isTranslating) {
+              runTranslation();
+            }
+            break;
+          case 'o': 
+            e.preventDefault(); 
+            toggleOriginalText(); 
+            break;
         }
       }
     });
@@ -908,6 +1494,19 @@ Translate each of the following segments into clear, natural English.`;
         }
       });
     }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      cleanupObserver.disconnect();
+      contentObserver.disconnect();
+      intersectionObserver.disconnect();
+      clearTimeout(window.autoTranslateTimeout);
+      
+      // Restore original history methods
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    });
+
   } // End of initializeExtension()
 
 })();

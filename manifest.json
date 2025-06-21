@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ollama Inline Translator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Translate non-English text inline using Ollama (via background fetch).",
   "permissions": [
     "contextMenus",
@@ -9,7 +9,10 @@
     "storage" 
   ],
   "host_permissions": [
-    "http://localhost:11434/*"
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "https://localhost:*/*",
+    "https://127.0.0.1:*/*"
   ],
   "background": {
     "service_worker": "background.js"
