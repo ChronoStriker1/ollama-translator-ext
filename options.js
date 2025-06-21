@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     function isValidDomain(domain) {
       if (!domain || domain.length === 0) return false;
+      if (domain.includes('127.0.0.1') || domain.includes('localhost')) return true;
       if (domain.startsWith('.') || domain.endsWith('.')) return false;
       return domain.includes('.') && !domain.includes(' ');
     }
