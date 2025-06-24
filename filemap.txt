@@ -1,0 +1,27 @@
+📁 ollama-translator-enhanced/
+├── 📄 manifest.json                    # Extension manifest
+├── 📄 background.js                    # Service worker
+├── 📁 options/                         # NEW: Options page
+│   ├── 📄 options.html                 # Settings page
+│   ├── 📄 options.js                   # Your current popup.js code
+│   └── 📄 options.css                  # Options styling
+├── 📁 popup/                           # Actual popup
+│   ├── 📄 popup.html                   # Quick actions popup
+│   ├── 📄 popup.js                     # Simple popup functionality
+│   └── 📄 popup.css                    # Popup styles
+├── 📁 content/                         # Content scripts
+│   ├── 📄 content-main.js              # Main orchestrator (entry point)
+│   ├── 📄 ui-manager.js                # UI components and toolbar
+│   ├── 📄 translation-engine.js        # Translation logic and jailbreaks
+│   ├── 📄 ocr-handler.js               # OCR functionality with Tesseract.js
+│   ├── 📄 utils.js                     # Utility functions
+│   └── 📄 content-styles.css           # Content script styles
+├── 📁 popup/                           # Extension popup
+│   ├── 📄 popup.html                   # Popup interface
+│   ├── 📄 popup.js                     # Popup functionality
+│   └── 📄 popup.css                    # Popup styles (NEW)
+└── 📁 assets/                          # Static assets
+    └── 📁 icons/                       # Extension icons
+        ├── 📄 icon16.png               # 16x16 icon
+        ├── 📄 icon48.png               # 48x48 icon
+        └── 📄 icon128.png              # 128x128 icon

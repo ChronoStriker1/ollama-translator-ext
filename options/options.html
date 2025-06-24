@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ollama Translator Enhanced - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🌐 Ollama Translator Enhanced Settings</h1>
+    
+    <!-- Ollama Connection Section -->
+    <div class="section">
+      <h2>🔗 Ollama Connection</h2>
+      <div class="setting-group">
+        <label for="ollamaUrl">Ollama URL:</label>
+        <input type="text" id="ollamaUrl" placeholder="http://localhost:11434/api/generate">
+      </div>
+      
+      <div class="setting-group">
+        <label for="ollamaModel">Model:</label>
+        <input type="text" id="ollamaModel" placeholder="llama3.2:latest">
+      </div>
+      
+      <button id="testBtn" class="btn-primary">🧪 Test Connection</button>
+    </div>
+
+    <!-- Translation Settings Section -->
+    <div class="section">
+      <h2>⚙️ Translation Settings</h2>
+      <div class="setting-group">
+        <label for="translationDelay">Delay between requests (ms):</label>
+        <input type="number" id="translationDelay" min="0" max="5000" value="300">
+      </div>
+      
+      <div class="setting-group">
+        <label for="maxRetries">Max retries per request:</label>
+        <input type="number" id="maxRetries" min="1" max="10" value="3">
+      </div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="useAggressiveBypass">
+        <label for="useAggressiveBypass">Enable aggressive bypass modes</label>
+      </div>
+      
+      <div class="setting-group">
+        <label for="bypassMode">Bypass mode:</label>
+        <select id="bypassMode">
+          <option value="translation">Translation</option>
+          <option value="simple">Simple</option>
+          <option value="direct">Direct</option>
+          <option value="casual">Casual</option>
+          <option value="roleplay">Roleplay</option>
+          <option value="academic">Academic</option>
+          <option value="technical">Technical</option>
+          <option value="developer">Developer</option>
+          <option value="uncensored">Uncensored</option>
+          <option value="bypass">Bypass</option>
+          <option value="jailbreak">Jailbreak</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- OCR Settings Section -->
+    <div class="section">
+      <h2>📷 OCR Settings</h2>
+      
+      <!-- OCR Provider Selection -->
+      <div class="setting-group">
+        <label>OCR Provider:</label>
+        <div class="provider-grid" id="provider-grid">
+          <!-- Providers will be populated by JavaScript -->
+        </div>
+      </div>
+      
+      <!-- Default OCR Language -->
+      <div class="setting-group">
+        <label for="default-ocr-language">Default OCR Language:</label>
+        <select id="default-ocr-language">
+          <!-- Options will be populated by JavaScript -->
+        </select>
+      </div>
+      
+      <!-- OCR Processing Options -->
+      <div class="setting-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="try-both-images"> 
+          <label for="try-both-images">Try both original and processed images (Tesseract only)</label>
+        </div>
+        <div class="help-text">When enabled, OCR will first try the original image, then a processed version if needed.</div>
+      </div>
+      
+      <div class="setting-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="ocr-debug-mode"> 
+          <label for="ocr-debug-mode">Enable OCR debug mode by default</label>
+        </div>
+        <div class="help-text">Shows captured images during OCR processing for troubleshooting.</div>
+      </div>
+    </div>
+
+    <!-- Google Cloud Vision Setup -->
+    <div class="section" id="google-cloud-section" style="display: none;">
+      <h2>☁️ Google Cloud Vision API</h2>
+      <div class="setting-group">
+        <label for="google-api-key">API Key:</label>
+        <input type="password" id="google-api-key" placeholder="Enter your Google Cloud Vision API key">
+        <div class="help-text">
+          Get your API key from <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>. 
+          Enable the Cloud Vision API and create credentials.
+        </div>
+      </div>
+      <button id="test-google-api" class="btn-primary">Test API Key</button>
+      <div class="api-status" id="google-api-status"></div>
+    </div>
+
+    <!-- macOS OCR Setup -->
+    <div class="section" id="macos-section" style="display: none;">
+      <h2>🍎 macOS OCR Setup</h2>
+      <div class="setup-info">
+        <p><strong>macOS OCR providers require native messaging hosts to be installed.</strong></p>
+        <p>Requirements:</p>
+        <ul>
+          <li>macOS 10.15+ (Vision Framework) or macOS 12+ (Live Text)</li>
+          <li>Native messaging host application</li>
+          <li>Proper permissions setup</li>
+        </ul>
+        <button id="download-macos-host" class="btn-secondary">Download Native Host</button>
+        <button id="macos-setup-help" class="btn-secondary">Setup Instructions</button>
+      </div>
+    </div>
+
+    <!-- Custom Instructions Section -->
+    <div class="section">
+      <h2>📝 Custom Instructions</h2>
+      <div class="setting-group">
+        <label for="customTranslateInstruction">Translation instruction:</label>
+        <textarea id="customTranslateInstruction" placeholder="Enter custom translation instruction..."></textarea>
+        <div class="help-text">This instruction will be used for all translations. Leave empty to use default.</div>
+      </div>
+    </div>
+
+    <!-- Excluded Domains Section -->
+    <div class="section">
+      <h2>🚫 Excluded Domains</h2>
+      <div class="setting-group">
+        <label for="excludedDomains">Domains to exclude (one per line):</label>
+        <textarea id="excludedDomains" placeholder="example.com&#10;localhost&#10;127.0.0.1&#10;192.168.1.100"></textarea>
+        <div class="help-text">
+          Extension will not run on these domains. Examples:<br>
+          • <strong>localhost</strong> - excludes all localhost<br>
+          • <strong>127.0.0.1</strong> - excludes local IP<br>
+          • <strong>192.168.1.100</strong> - excludes specific local IP<br>
+          • <strong>example.com</strong> - excludes specific domain
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button id="saveBtn" class="btn-primary">💾 Save Settings</button>
+      <button id="resetBtn" class="btn-danger">🔄 Reset to Defaults</button>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

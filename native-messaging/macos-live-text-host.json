@@ -1,0 +1,9 @@
+{
+  "name": "com.ollama.translator.ocr",
+  "description": "macOS Live Text OCR Host for Ollama Translator",
+  "path": "/Applications/OllamaTranslatorOCR.app/Contents/MacOS/live-text-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://minipllbhcknpjlpkoakcoklnnbeinbi/"
+  ]
+}

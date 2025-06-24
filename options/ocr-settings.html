@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OCR Settings - Ollama Translator</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📷 OCR Settings</h1>
+    
+    <div class="section">
+      <h2>OCR Provider</h2>
+      <div class="provider-grid" id="provider-grid">
+        <!-- Providers will be populated by JavaScript -->
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Default Settings</h2>
+      <div class="setting-group">
+        <label for="default-language">Default OCR Language:</label>
+        <select id="default-language">
+          <!-- Options will be populated by JavaScript -->
+        </select>
+      </div>
+      
+      <div class="setting-group">
+        <label>
+          <input type="checkbox" id="try-both-images"> 
+          Try both original and processed images (Tesseract only)
+        </label>
+      </div>
+      
+      <div class="setting-group">
+        <label>
+          <input type="checkbox" id="debug-mode"> 
+          Enable debug mode by default
+        </label>
+      </div>
+    </div>
+    
+    <div class="section" id="google-cloud-section" style="display: none;">
+      <h2>Google Cloud Vision API</h2>
+      <div class="setting-group">
+        <label for="google-api-key">API Key:</label>
+        <input type="password" id="google-api-key" placeholder="Enter your Google Cloud Vision API key">
+        <button id="test-google-api">Test API Key</button>
+      </div>
+      <div class="api-status" id="google-api-status"></div>
+    </div>
+    
+    <div class="section" id="macos-section" style="display: none;">
+      <h2>macOS OCR Setup</h2>
+      <div class="setup-info">
+        <p>macOS OCR providers require native messaging hosts to be installed.</p>
+        <button id="download-macos-host">Download Native Host</button>
+        <button id="macos-setup-help">Setup Instructions</button>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="save-settings" class="primary">Save Settings</button>
+      <button id="reset-settings">Reset to Defaults</button>
+    </div>
+    
+    <div class="status" id="status"></div>
+  </div>
+  
+  <script src="ocr-settings.js"></script>
+</body>
+</html>

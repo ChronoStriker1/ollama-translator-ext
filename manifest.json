@@ -1,18 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "Ollama Inline Translator",
-  "version": "1.0.1",
-  "description": "Translate non-English text inline using Ollama (via background fetch).",
+  "name": "Ollama Translator Enhanced",
+  "version": "2.0.0",
+  "description": "Advanced translation extension with OCR support and jailbreak capabilities",
   "permissions": [
+    "storage",
+    "activeTab",
     "contextMenus",
     "scripting",
-    "storage" 
+    "tabs",
+    "nativeMessaging",
+    "storage"
   ],
   "host_permissions": [
-    "http://localhost:*/*",
-    "http://127.0.0.1:*/*",
-    "https://localhost:*/*",
-    "https://127.0.0.1:*/*"
+    "http://localhost/*",
+    "https://*/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,14 +23,38 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
+      "js": [
+        "libs/html2canvas.min.js",
+        "libs/tesseract.min.js",
+        "content/utils.js",
+        "content/ocr-providers.js",
+        "content/ocr-handler.js",
+        "content/translation-engine.js",
+        "content/ui-manager.js",
+        "content/content-main.js"
+      ],
+      "css": ["content/content-styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Ollama Translator"
+  },
+  "options_page": "options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*", 
+        "libs/*",
+        "content/*.css"  
+      ],
+      "matches": ["<all_urls>"]
     }
   ],
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "options_page": "options.html" 
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  }
 }

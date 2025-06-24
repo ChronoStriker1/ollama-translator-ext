@@ -1,0 +1,116 @@
+/* Content script styles - Consistent Theme */
+@keyframes ollama-blink {
+  0%, 100% { 
+    background-color: rgba(255, 250, 139, 0.5) !important; 
+  }
+  50% { 
+    background-color: rgba(255, 250, 139, 0.2) !important; 
+  }
+}
+
+.ollama-highlight {
+  background-color: rgba(255, 250, 139, 0.5) !important;
+  animation: ollama-blink 1.5s ease-in-out infinite !important;
+}
+
+/* Force checkbox visibility - Consistent with main theme */
+#ollama-bypass-checkbox {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10003 !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  margin-right: 8px !important;
+  border: 2px solid #fff !important;
+  background: #333 !important;
+  appearance: checkbox !important;
+  -webkit-appearance: checkbox !important;
+  -moz-appearance: checkbox !important;
+}
+
+#ollama-bypass-checkbox:checked {
+  background: #4CAF50 !important;
+  border-color: #4CAF50 !important;
+}
+
+#ollama-bypass-checkbox:checked::after {
+  content: '✓' !important;
+  color: white !important;
+  font-size: 12px !important;
+  position: absolute !important;
+  top: -2px !important;
+  left: 1px !important;
+}
+
+/* OCR Selection Styles - Consistent with main theme */
+#ocr-selection-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  z-index: 999999 !important;
+  pointer-events: all !important;
+}
+
+#ocr-selection-box {
+  position: absolute !important;
+  border: 2px dashed #ff6b6b !important;
+  background-color: rgba(255, 107, 107, 0.1) !important;
+  pointer-events: none !important;
+}
+
+/* Toolbar styles - Consistent theme */
+#ollama-translator-toolbar {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background: #222 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  opacity: 0.9 !important;
+}
+
+#ollama-translator-toolbar * {
+  box-sizing: border-box !important;
+}
+
+#ollama-translator-toolbar button:hover {
+  opacity: 0.8 !important;
+}
+
+#ollama-translator-toolbar textarea:focus,
+#ollama-translator-toolbar input:focus,
+#ollama-translator-toolbar select:focus {
+  outline: 2px solid #4CAF50 !important;
+  outline-offset: 1px !important;
+}
+
+/* Globe icon styling */
+.ollama-globe-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Draggable elements */
+.ollama-draggable {
+  cursor: move !important;
+}
+
+.ollama-no-drag {
+  cursor: default !important;
+}

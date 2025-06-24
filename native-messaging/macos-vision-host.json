@@ -1,0 +1,9 @@
+{
+  "name": "com.ollama.translator.vision",
+  "description": "macOS Vision Framework OCR Host for Ollama Translator",
+  "path": "/Applications/OllamaTranslatorOCR.app/Contents/MacOS/vision-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://minipllbhcknpjlpkoakcoklnnbeinbi/"
+  ]
+}
