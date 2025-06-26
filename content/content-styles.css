@@ -1,10 +1,19 @@
 /* Content script styles - Consistent Theme */
 @keyframes ollama-blink {
+<<<<<<< HEAD
   0%, 100% { 
     background-color: rgba(255, 250, 139, 0.5) !important; 
   }
   50% { 
     background-color: rgba(255, 250, 139, 0.2) !important; 
+=======
+  0%,
+  100% {
+    background-color: rgba(255, 250, 139, 0.5) !important;
+  }
+  50% {
+    background-color: rgba(255, 250, 139, 0.2) !important;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 }
 
@@ -33,8 +42,13 @@
 }
 
 #ollama-bypass-checkbox:checked {
+<<<<<<< HEAD
   background: #4CAF50 !important;
   border-color: #4CAF50 !important;
+=======
+  background: #4caf50 !important;
+  border-color: #4caf50 !important;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 }
 
 #ollama-bypass-checkbox:checked::after {
@@ -67,11 +81,20 @@
 
 /* Toolbar styles - Consistent theme */
 #ollama-translator-toolbar {
+<<<<<<< HEAD
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   background: #222 !important;
   color: #fff !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+=======
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif !important;
+  background: #222 !important;
+  color: #fff !important;
+  border-radius: 8px; /* No !important */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   opacity: 0.9 !important;
 }
 
@@ -86,6 +109,7 @@
 #ollama-translator-toolbar textarea:focus,
 #ollama-translator-toolbar input:focus,
 #ollama-translator-toolbar select:focus {
+<<<<<<< HEAD
   outline: 2px solid #4CAF50 !important;
   outline-offset: 1px !important;
 }
@@ -106,6 +130,12 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
 }
 
+=======
+  outline: 2px solid #4caf50 !important;
+  outline-offset: 1px !important;
+}
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 /* Draggable elements */
 .ollama-draggable {
   cursor: move !important;

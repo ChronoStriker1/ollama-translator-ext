@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // Enhanced OCR Handler with Multiple Provider Support - COMPLETE FIXED VERSION
+=======
+// Enhanced OCR Handler with Engine Selection UI - FINAL VERSION
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 class OCRHandler {
   constructor() {
     this.isSelecting = false;
@@ -7,6 +11,7 @@ class OCRHandler {
     this.overlay = null;
     this.controlPanel = null;
     this.ocrProviders = null;
+<<<<<<< HEAD
     this.orientationMode = 'auto';
     this.isDragging = false;
     this.debugMode = false;
@@ -15,13 +20,28 @@ class OCRHandler {
     this.tryBothImages = true;
     this.currentProviderInfo = null;
     
+=======
+    this.orientationMode = 'horizontal'; // Default to horizontal
+    this.isDragging = false;
+    this.debugMode = false;
+    this.selectedLanguage = 'auto';
+    this.selectedProvider = 'macos_live_text'; // Default to the native macOS engine
+    this.tryBothImages = true;
+    this.currentProviderInfo = null;
+    this.isPanelCollapsed = true;
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     // Event handler references for proper cleanup
     this.mouseDownHandler = null;
     this.mouseMoveHandler = null;
     this.mouseUpHandler = null;
     this.keyDownHandler = null;
+<<<<<<< HEAD
     
     // Initialize providers only if OCRProviders is available
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.initializeProviders();
     this.setupEventListeners();
     this.injectOCRStyles();
@@ -34,10 +54,15 @@ class OCRHandler {
         this.ocrProviders = new OCRProviders();
       } else {
         console.warn('OCRProviders not available, creating stub');
+<<<<<<< HEAD
+=======
+        // Stub provider list without the redundant Vision option
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         this.ocrProviders = {
           getAvailableProviders: () => ({
             tesseract: {
               name: 'Tesseract.js',
+<<<<<<< HEAD
               description: 'OCR engine (requires library)',
               isAvailable: typeof window.Tesseract !== 'undefined',
               requiresSetup: false,
@@ -47,6 +72,25 @@ class OCRHandler {
           initializeProvider: () => Promise.resolve(false),
           performOCR: () => Promise.reject(new Error('OCR providers not available')),
           cleanup: () => {}
+=======
+              description: 'Robust engine, best for manga/stylized text.',
+              isAvailable: typeof window.Tesseract !== 'undefined',
+              requiresSetup: false,
+              supportedLanguages: { eng: 'English' },
+            },
+            macos_live_text: {
+              name: 'macOS Native OCR',
+              description: 'Fastest engine, best for standard text.',
+              isAvailable: false,
+              requiresSetup: true,
+              supportedLanguages: { eng: 'English' },
+            },
+          }),
+          initializeProvider: () => Promise.resolve(false),
+          performOCR: () =>
+            Promise.reject(new Error('OCR providers not available')),
+          cleanup: () => {},
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         };
       }
     } catch (error) {
@@ -55,12 +99,17 @@ class OCRHandler {
         getAvailableProviders: () => ({}),
         initializeProvider: () => Promise.resolve(false),
         performOCR: () => Promise.reject(new Error('OCR initialization failed')),
+<<<<<<< HEAD
         cleanup: () => {}
+=======
+        cleanup: () => {},
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       };
     }
   }
 
   async loadSettings() {
+<<<<<<< HEAD
       try {
         const result = await chrome.storage.sync.get([
           'ocrProvider',
@@ -104,6 +153,35 @@ class OCRHandler {
         this.debugMode = false;
       }
     }
+=======
+    try {
+      const result = await chrome.storage.sync.get([
+        'ocrProvider',
+        'ocrLanguage',
+        'ocrTryBothImages',
+        'ocrDebugMode',
+      ]);
+
+      this.selectedProvider = result.ocrProvider || 'macos_live_text';
+      this.selectedLanguage = result.ocrLanguage || 'auto';
+      this.tryBothImages = result.ocrTryBothImages !== false;
+      this.debugMode = result.ocrDebugMode || false;
+
+      console.log('📋 Loaded OCR settings:', {
+        provider: this.selectedProvider,
+        language: this.selectedLanguage,
+        tryBothImages: this.tryBothImages,
+        debugMode: this.debugMode,
+      });
+    } catch (error) {
+      console.warn('Failed to load OCR settings:', error);
+      this.selectedProvider = 'macos_live_text';
+      this.selectedLanguage = 'auto';
+      this.tryBothImages = true;
+      this.debugMode = false;
+    }
+  }
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
   async saveSettings() {
     try {
@@ -111,7 +189,11 @@ class OCRHandler {
         ocrProvider: this.selectedProvider,
         ocrLanguage: this.selectedLanguage,
         ocrTryBothImages: this.tryBothImages,
+<<<<<<< HEAD
         ocrDebugMode: this.debugMode
+=======
+        ocrDebugMode: this.debugMode,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       });
     } catch (error) {
       console.warn('Failed to save OCR settings:', error);
@@ -119,15 +201,21 @@ class OCRHandler {
   }
 
   injectOCRStyles() {
+<<<<<<< HEAD
     // Remove existing styles first
     const existingStyle = document.getElementById('ocr-handler-styles');
     if (existingStyle) {
       existingStyle.remove();
     }
+=======
+    const existingStyle = document.getElementById('ocr-handler-styles');
+    if (existingStyle) existingStyle.remove();
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
     const style = document.createElement('style');
     style.id = 'ocr-handler-styles';
     style.textContent = `
+<<<<<<< HEAD
       /* OCR Selection Overlay - Consistent with main theme */
       #ocr-selection-overlay {
         position: fixed !important;
@@ -533,6 +621,89 @@ class OCRHandler {
         visibility: hidden !important;
         opacity: 0 !important;
       }
+=======
+      #ocr-selection-overlay {
+        position: fixed !important; top: 0 !important; left: 0 !important;
+        width: 100vw !important; height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        z-index: 999999 !important; pointer-events: all !important;
+      }
+      #ocr-selection-box {
+        position: absolute !important; border: 2px dashed #ff6b6b !important;
+        background-color: rgba(255, 107, 107, 0.1) !important;
+        pointer-events: none !important;
+      }
+      .ocr-control-panel {
+        position: fixed !important; top: 20px !important; right: 20px !important;
+        background: #222 !important; color: #fff !important;
+        padding: 15px !important; border-radius: 8px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 14px !important; z-index: 1000000 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        min-width: 380px !important; max-width: 420px !important;
+        transition: all 0.2s ease-in-out;
+      }
+      .ocr-control-panel.collapsed {
+        min-width: 40px !important; width: 40px !important; height: 40px !important;
+        padding: 0 !important; overflow: hidden !important; border-radius: 50% !important;
+      }
+      .ocr-panel-content { display: block; }
+      .ocr-control-panel.collapsed .ocr-panel-content { display: none; }
+      .ocr-toggle-button {
+        position: absolute !important; top: 8px !important; right: 8px !important;
+        width: 24px !important; height: 24px !important; background: #444 !important;
+        border: none !important; color: #fff !important; border-radius: 4px !important;
+        cursor: pointer !important; font-size: 16px !important; line-height: 1 !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+      }
+      .ocr-control-panel.collapsed .ocr-toggle-button {
+        width: 100% !important; height: 100% !important; top: 0 !important; right: 0 !important;
+        font-size: 20px !important; background: #4CAF50 !important; border-radius: 50% !important;
+      }
+      .ocr-draggable { cursor: move !important; user-select: none !important; }
+      .ocr-no-drag { cursor: default !important; }
+      .ocr-section {
+        margin-bottom: 15px !important; padding: 12px !important;
+        background: #333 !important; border-radius: 6px !important;
+        border: 1px solid #555 !important;
+      }
+      .ocr-section-header {
+        margin-bottom: 10px !important; font-weight: bold !important; color: #fff !important;
+      }
+      .ocr-provider-item {
+        display: flex !important; align-items: center !important; padding: 8px !important;
+        border-radius: 4px !important; background: #444 !important; cursor: pointer !important;
+        transition: background-color 0.2s !important;
+      }
+      .ocr-provider-item:not(:last-child) { margin-bottom: 8px; }
+      .ocr-provider-item:hover { background: #555 !important; }
+      .ocr-provider-item.selected { background: #4CAF50 !important; }
+      .ocr-provider-item.disabled { opacity: 0.5 !important; cursor: not-allowed !important; }
+      .ocr-provider-radio {
+        width: 16px !important; height: 16px !important; margin: 0 10px 0 0 !important;
+        cursor: pointer !important; flex-shrink: 0 !important;
+      }
+      .ocr-provider-info { flex: 1 !important; }
+      .ocr-provider-name { font-size: 13px !important; color: #fff !important; font-weight: bold !important; }
+      .ocr-provider-description { font-size: 11px !important; color: #ccc !important; }
+      .ocr-select {
+        width: 100%; padding: 6px; background: #444; color: #fff;
+        border: 1px solid #555; border-radius: 4px;
+      }
+      .ocr-option-container {
+        display: flex !important; align-items: center !important; margin-top: 10px;
+      }
+      .ocr-checkbox { margin-right: 8px !important; }
+      .ocr-option-label { font-size: 13px !important; user-select: none !important; }
+      .ocr-instruction-popup, .ocr-loading-message {
+        position: fixed !important; top: 50% !important; left: 50% !important;
+        transform: translate(-50%, -50%) !important; background-color: rgba(34, 34, 34, 0.95) !important;
+        color: #fff !important; padding: 20px !important; border-radius: 8px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 16px !important; text-align: center !important; z-index: 1000001 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+      }
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     `;
     document.head.appendChild(style);
   }
@@ -542,12 +713,17 @@ class OCRHandler {
       if (message.action === 'start-ocr') {
         console.log('📷 OCR Handler received start-ocr message');
         this.startOCRSelection();
+<<<<<<< HEAD
         sendResponse({status: 'started'});
+=======
+        sendResponse({ status: 'started' });
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       }
     });
   }
 
   async startOCRSelection() {
+<<<<<<< HEAD
       console.log('📷 Starting OCR selection...');
       
       if (this.isSelecting) {
@@ -634,22 +810,101 @@ class OCRHandler {
     console.log('📷 Overlay created, setting up event listeners...');
     
     // Setup event listeners
+=======
+    console.log('📷 Starting OCR selection...');
+
+    if (this.isSelecting) {
+      console.log('📷 OCR already in progress, ignoring');
+      return;
+    }
+
+    try {
+      this.showLoadingMessage('Initializing OCR engine...');
+
+      const availableProviders = this.ocrProviders.getAvailableProviders();
+      this.currentProviderInfo = availableProviders[this.selectedProvider];
+
+      if (!this.currentProviderInfo?.isAvailable) {
+        this.hideLoadingMessage();
+        this.showError(
+          `Selected OCR provider "${this.selectedProvider}" is not available. Please select a different provider.`
+        );
+        return;
+      }
+
+      await this.ocrProviders.initializeProvider(this.selectedProvider);
+
+      if (
+        window.ollamaTranslator &&
+        window.ollamaTranslator.detectPageLanguage
+      ) {
+        console.log('🚀 Kicking off background page language detection...');
+        window.ollamaTranslator.detectPageLanguage();
+      }
+
+      this.hideLoadingMessage();
+
+      console.log('📷 Creating selection overlay...');
+      this.isSelecting = true;
+      this.isDragging = false;
+      this.createSelectionOverlay();
+
+      setTimeout(() => this.showInstructions(), 100);
+
+      document.body.style.cursor = 'crosshair';
+      console.log('📷 OCR selection ready');
+    } catch (error) {
+      console.error('Failed to start OCR:', error);
+      this.showError('Failed to initialize OCR: ' + error.message);
+      this.hideLoadingMessage();
+    }
+  }
+
+  createSelectionOverlay() {
+    console.log('📷 Creating selection overlay...');
+
+    this.cancelOCRSelection();
+
+    this.overlay = document.createElement('div');
+    this.overlay.id = 'ocr-selection-overlay';
+
+    this.selectionBox = document.createElement('div');
+    this.selectionBox.id = 'ocr-selection-box';
+
+    this.controlPanel = this.createControlPanel();
+
+    this.overlay.appendChild(this.selectionBox);
+    this.overlay.appendChild(this.controlPanel);
+    document.body.appendChild(this.overlay);
+
+    console.log('📷 Overlay created, setting up event listeners...');
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.mouseDownHandler = this.handleMouseDown.bind(this);
     this.mouseMoveHandler = this.handleMouseMove.bind(this);
     this.mouseUpHandler = this.handleMouseUp.bind(this);
     this.keyDownHandler = this.handleKeyDown.bind(this);
+<<<<<<< HEAD
     
     // Add event listeners to the overlay, not document
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.overlay.addEventListener('mousedown', this.mouseDownHandler, true);
     document.addEventListener('mousemove', this.mouseMoveHandler, true);
     document.addEventListener('mouseup', this.mouseUpHandler, true);
     document.addEventListener('keydown', this.keyDownHandler, true);
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     console.log('📷 Event listeners attached');
   }
 
   createControlPanel() {
     console.log('📷 Creating control panel...');
+<<<<<<< HEAD
     
     const panel = document.createElement('div');
     panel.className = 'ocr-control-panel';
@@ -761,10 +1016,67 @@ class OCRHandler {
       <div style="margin-bottom: 15px;">
         <div class="ocr-option-container">
           <div class="ocr-input-wrapper">
+=======
+
+    const panel = document.createElement('div');
+    panel.className = 'ocr-control-panel';
+    if (this.isPanelCollapsed) panel.classList.add('collapsed');
+    this.makeDraggable(panel);
+
+    const availableProviders = this.ocrProviders.getAvailableProviders();
+    const currentProviderInfo = availableProviders[this.selectedProvider];
+    const supportedLanguages = currentProviderInfo?.supportedLanguages || {};
+
+    panel.innerHTML = `
+      <button class="ocr-toggle-button ocr-no-drag">📷</button>
+      <div class="ocr-panel-content">
+        <div class="ocr-draggable" style="font-weight: bold; margin-bottom: 15px; padding: 5px 0;">📷 OCR Selection</div>
+        
+        <!-- Engine Selection -->
+        <div class="ocr-section">
+          <div class="ocr-section-header">🔧 OCR Engine</div>
+          ${Object.entries(availableProviders)
+            .map(([key, provider]) => `
+              <div class="ocr-provider-item ${key === this.selectedProvider ? 'selected' : ''} ${!provider.isAvailable ? 'disabled' : ''}" data-provider="${key}">
+                <input type="radio" class="ocr-provider-radio ocr-no-drag" name="ocr-provider" value="${key}" ${key === this.selectedProvider ? 'checked' : ''} ${!provider.isAvailable ? 'disabled' : ''}>
+                <div class="ocr-provider-info">
+                  <div class="ocr-provider-name">${provider.name}</div>
+                  <div class="ocr-provider-description">${provider.description}</div>
+                </div>
+              </div>
+            `).join('')}
+        </div>
+        
+        <!-- Language & Orientation -->
+        <div class="ocr-section">
+          <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+              <div class="ocr-section-header" style="margin-bottom: 5px;">🌐 Language</div>
+              <select id="ocr-language-select" class="ocr-select ocr-no-drag">
+                ${Object.entries(supportedLanguages)
+                  .map(([code, name]) => `<option value="${code}" ${code === this.selectedLanguage ? 'selected' : ''}>${name}</option>`)
+                  .join('')}
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <div class="ocr-section-header" style="margin-bottom: 5px;">📐 Orientation</div>
+              <select id="ocr-orientation-select" class="ocr-select ocr-no-drag">
+                <option value="horizontal" ${this.orientationMode === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+                <option value="vertical" ${this.orientationMode === 'vertical' ? 'selected' : ''}>Vertical</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Options -->
+        <div class="ocr-section">
+           <div class="ocr-option-container">
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
             <input type="checkbox" class="ocr-checkbox ocr-no-drag" id="ocr-debug" ${this.debugMode ? 'checked' : ''}>
             <label class="ocr-option-label ocr-no-drag" for="ocr-debug">Debug mode (show captured images)</label>
           </div>
         </div>
+<<<<<<< HEAD
       </div>
       
       <!-- Action Buttons -->
@@ -818,6 +1130,32 @@ class OCRHandler {
       item.addEventListener('click', (e) => {
         if (e.target.type === 'radio') return;
         
+=======
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 8px; margin-top: 15px;">
+          <button id="ocr-cancel-btn" class="ocr-no-drag" style="flex: 1; padding: 8px; background: #666; border: none; color: white; border-radius: 4px; cursor: pointer;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    this.setupPanelEventListeners(panel);
+    return panel;
+  }
+
+  setupPanelEventListeners(panel) {
+    const toggleButton = panel.querySelector('.ocr-toggle-button');
+    toggleButton.addEventListener('click', () => {
+      this.isPanelCollapsed = !this.isPanelCollapsed;
+      panel.classList.toggle('collapsed', this.isPanelCollapsed);
+      toggleButton.textContent = this.isPanelCollapsed ? '📷' : '▼';
+    });
+
+    const providerItems = panel.querySelectorAll('.ocr-provider-item');
+    providerItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        if (item.classList.contains('disabled')) return;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         const radio = item.querySelector('input[type="radio"]');
         if (radio && !radio.checked) {
           radio.checked = true;
@@ -825,6 +1163,7 @@ class OCRHandler {
         }
       });
     });
+<<<<<<< HEAD
     
     languageRadios.forEach(radio => {
       radio.addEventListener('change', (e) => {
@@ -1004,10 +1343,69 @@ class OCRHandler {
           this.updateSelectedLanguage(e.target.value);
         }
       });
+=======
+
+    const providerRadios = panel.querySelectorAll('input[name="ocr-provider"]');
+    providerRadios.forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.checked) this.updateSelectedProvider(e.target.value);
+      });
+    });
+
+    const languageSelect = panel.querySelector('#ocr-language-select');
+    languageSelect.addEventListener('change', (e) => this.updateSelectedLanguage(e.target.value));
+
+    const orientationSelect = panel.querySelector('#ocr-orientation-select');
+    orientationSelect.addEventListener('change', (e) => {
+      this.orientationMode = e.target.value;
+      this.saveSettings();
+    });
+
+    const debugCheckbox = panel.querySelector('#ocr-debug');
+    debugCheckbox.addEventListener('change', (e) => {
+      this.debugMode = e.target.checked;
+      this.saveSettings();
+    });
+
+    const cancelBtn = panel.querySelector('#ocr-cancel-btn');
+    cancelBtn.addEventListener('click', () => this.cancelOCRSelection());
+  }
+
+  async updateSelectedProvider(providerKey) {
+    this.selectedProvider = providerKey;
+    document.querySelectorAll('.ocr-provider-item').forEach(item => {
+      item.classList.toggle('selected', item.dataset.provider === providerKey);
+    });
+    this.updateLanguageOptions();
+    await this.saveSettings();
+  }
+
+  updateSelectedLanguage(languageCode) {
+    this.selectedLanguage = languageCode;
+    this.saveSettings();
+  }
+
+  updateLanguageOptions() {
+    const languageSelect = document.getElementById('ocr-language-select');
+    if (!languageSelect) return;
+
+    const availableProviders = this.ocrProviders.getAvailableProviders();
+    const currentProvider = availableProviders[this.selectedProvider];
+    const supportedLanguages = currentProvider?.supportedLanguages || {};
+
+    languageSelect.innerHTML = '';
+    Object.entries(supportedLanguages).forEach(([code, name]) => {
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = name;
+      option.selected = code === this.selectedLanguage;
+      languageSelect.appendChild(option);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
   }
 
   handleMouseDown(e) {
+<<<<<<< HEAD
     console.log('📷 Mouse down on overlay, target:', e.target.id, 'className:', e.target.className);
     
     // Only start selection if clicking directly on the overlay
@@ -1023,11 +1421,17 @@ class OCRHandler {
       y: e.clientY
     };
 
+=======
+    if (e.target !== this.overlay) return;
+    this.isDragging = true;
+    this.startPoint = { x: e.clientX, y: e.clientY };
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.selectionBox.style.left = e.clientX + 'px';
     this.selectionBox.style.top = e.clientY + 'px';
     this.selectionBox.style.width = '0px';
     this.selectionBox.style.height = '0px';
     this.selectionBox.style.display = 'block';
+<<<<<<< HEAD
     this.selectionBox.classList.add('active');
 
     console.log('📷 Selection box positioned at:', e.clientX, e.clientY);
@@ -1104,10 +1508,83 @@ class OCRHandler {
   handleKeyDown(e) {
     if (e.key === 'Escape') {
       console.log('📷 ESC pressed, canceling OCR');
+=======
+    e.preventDefault();
+  }
+
+  handleMouseMove(e) {
+    if (!this.isDragging) return;
+    const x = Math.min(e.clientX, this.startPoint.x);
+    const y = Math.min(e.clientY, this.startPoint.y);
+    const width = Math.abs(e.clientX - this.startPoint.x);
+    const height = Math.abs(e.clientY - this.startPoint.y);
+    this.selectionBox.style.left = x + 'px';
+    this.selectionBox.style.top = y + 'px';
+    this.selectionBox.style.width = width + 'px';
+    this.selectionBox.style.height = height + 'px';
+  }
+
+  async handleMouseUp(e) {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    const rect = {
+      left: Math.min(e.clientX, this.startPoint.x),
+      top: Math.min(e.clientY, this.startPoint.y),
+      width: Math.abs(e.clientX - this.startPoint.x),
+      height: Math.abs(e.clientY - this.startPoint.y),
+    };
+    if (rect.width < 20 || rect.height < 20) {
+      this.selectionBox.style.display = 'none';
+      return;
+    }
+    await this.captureAndTranslate(rect);
+  }
+
+  handleKeyDown(e) {
+    if (e.key === 'Escape') this.cancelOCRSelection();
+  }
+
+  async captureAndTranslate(rect) {
+    try {
+      this.hideUIForCapture();
+      await new Promise(r => setTimeout(r, 200));
+      this.showLoadingIndicator('Capturing image...');
+      const canvas = await this.captureWithBackgroundScript(rect);
+      if (this.debugMode) this.showDebugCanvas(canvas, 'Original Screenshot');
+      
+      let ocrLanguage = this.selectedLanguage;
+      if (ocrLanguage === 'auto') {
+        this.showLoadingIndicator('Detecting page language...');
+        const detectedLangName = await window.ollamaTranslator.detectPageLanguage();
+        const langCode = { 'japanese': 'jpn', 'chinese': 'chi_sim', 'english': 'eng', 'korean': 'kor' }[detectedLangName.toLowerCase()];
+        if (langCode) {
+          ocrLanguage = langCode;
+          this.showLoadingIndicator(`Using page language (${detectedLangName}) for OCR...`);
+        }
+      }
+
+      this.showLoadingIndicator(`Performing OCR with ${this.selectedProvider}...`);
+      const ocrResult = await this.ocrProviders.performOCR(canvas, {
+        language: ocrLanguage,
+        orientation: this.orientationMode,
+      });
+
+      if (ocrResult?.text && ocrResult.text.trim()) {
+        this.showLoadingIndicator('Translating text...');
+        await this.translateOCRResult(ocrResult.text, rect);
+      } else {
+        this.showError('No text detected. Try a different OCR engine or orientation.');
+      }
+    } catch (error) {
+      console.error('OCR capture failed:', error);
+      this.showError('OCR processing failed: ' + error.message);
+    } finally {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       this.cancelOCRSelection();
     }
   }
 
+<<<<<<< HEAD
   resetSelection() {
     this.startPoint = null;
     this.isDragging = false;
@@ -1456,10 +1933,69 @@ class OCRHandler {
       );
 
       this.showOCRResult(text, translated, rect, usedProcessedImage);
+=======
+  hideUIForCapture() {
+    if (this.overlay) this.overlay.style.visibility = 'hidden';
+  }
+
+  async captureWithBackgroundScript(rect) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: 'captureScreenshot' }, (response) => {
+        if (chrome.runtime.lastError || response.error) {
+          reject(new Error(chrome.runtime.lastError?.message || response.error));
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const scaleX = img.naturalWidth / window.innerWidth;
+          const scaleY = img.naturalHeight / window.innerHeight;
+          canvas.width = rect.width * scaleX;
+          canvas.height = rect.height * scaleY;
+          ctx.drawImage(img, rect.left * scaleX, rect.top * scaleY, rect.width * scaleX, rect.height * scaleY, 0, 0, canvas.width, canvas.height);
+          resolve(canvas);
+        };
+        img.onerror = () => reject(new Error('Failed to load screenshot image'));
+        img.src = response.dataUrl;
+      });
+    });
+  }
+
+  showInstructions() {
+    const instructions = document.createElement('div');
+    instructions.className = 'ocr-instruction-popup';
+    instructions.innerHTML = `
+      <div style="font-size: 18px; margin-bottom: 15px;">📷 OCR Selection</div>
+      <div>1. Drag to select text area</div>
+      <div>2. Release to capture and translate</div>
+      <div style="margin-top: 15px; font-size: 12px;">Press ESC to cancel</div>
+    `;
+    document.body.appendChild(instructions);
+    setTimeout(() => instructions.remove(), 3000);
+  }
+
+  showLoadingIndicator(message = 'Processing OCR...') {
+    let loading = document.getElementById('ocr-loading');
+    if (!loading) {
+      loading = document.createElement('div');
+      loading.id = 'ocr-loading';
+      loading.className = 'ocr-loading-message';
+      document.body.appendChild(loading);
+    }
+    loading.innerHTML = `<div>📷 ${message}</div>`;
+  }
+
+  async translateOCRResult(text, rect) {
+    try {
+      const translated = await window.ollamaTranslator.translationEngine.translateTextWithContext(text.trim(), '', '', false);
+      this.showOCRResult(text, translated, rect);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     } catch (error) {
       this.showError('Translation failed: ' + error.message);
     }
   }
+<<<<<<< HEAD
   
   showOCRResult(originalText, translatedText, rect, usedProcessedImage = false) {
     const popup = document.createElement('div');
@@ -1583,11 +2119,33 @@ class OCRHandler {
         imageType: imageTypeText
       });
     }
+=======
+
+  showOCRResult(originalText, translatedText, rect) {
+    const popup = document.createElement('div');
+    Object.assign(popup.style, {
+      position: 'fixed', left: `${rect.left}px`, top: `${rect.top + rect.height + 10}px`,
+      width: '320px', maxHeight: '400px', backgroundColor: '#333', color: '#fff',
+      padding: '15px', borderRadius: '8px', fontFamily: 'sans-serif', fontSize: '14px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: '1000000', overflow: 'auto',
+    });
+    this.makeDraggable(popup);
+    popup.innerHTML = `
+      <div class="ocr-draggable" style="font-weight: bold; margin-bottom: 10px;">📷 OCR Translation</div>
+      <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Original:</div>
+      <div style="background: #222; padding: 8px; border-radius: 4px; font-size: 12px; max-height: 80px; overflow-y: auto;">${originalText}</div>
+      <div style="font-size: 12px; color: #aaa; margin: 10px 0 5px;">Translation:</div>
+      <div style="background: #444; padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto;">${translatedText}</div>
+      <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 18px; cursor: pointer;">×</button>
+    `;
+    document.body.appendChild(popup);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 
   showDebugCanvas(canvas, method) {
     const debugDiv = document.createElement('div');
     Object.assign(debugDiv.style, {
+<<<<<<< HEAD
       position: 'fixed',
       top: '10px',
       left: '10px',
@@ -1815,12 +2373,47 @@ Note: The native app is not included with this extension and requires separate i
       e.preventDefault();
     };
 
+=======
+      position: 'fixed', top: '10px', left: '10px', backgroundColor: '#222', color: '#fff',
+      padding: '15px', borderRadius: '8px', zIndex: '1000002', maxWidth: '600px',
+      maxHeight: '80vh', overflow: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+    });
+    this.makeDraggable(debugDiv);
+    const dataUrl = canvas.toDataURL();
+    debugDiv.innerHTML = `
+      <div class="ocr-draggable" style="font-weight: bold; margin-bottom: 10px;">🔍 OCR Debug: ${method}</div>
+      <img src="${dataUrl}" style="max-width: 100%; border: 1px solid #fff;">
+      <button onclick="this.parentElement.remove()" style="margin-top: 10px; padding: 6px 12px; background: #666; color: #fff; border: none; border-radius: 4px;">Close</button>
+    `;
+    document.body.appendChild(debugDiv);
+  }
+
+  makeDraggable(element) {
+    let isDragging = false, startX, startY, startLeft, startTop;
+    const handleMouseDown = (e) => {
+      if (!e.target.classList.contains('ocr-draggable')) return;
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const rect = element.getBoundingClientRect();
+      startLeft = rect.left; startTop = rect.top;
+      element.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      const newLeft = startLeft + (e.clientX - startX);
+      const newTop = startTop + (e.clientY - startY);
+      element.style.left = `${newLeft}px`;
+      element.style.top = `${newTop}px`;
+    };
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     const handleMouseUp = () => {
       if (isDragging) {
         isDragging = false;
         element.style.cursor = '';
       }
     };
+<<<<<<< HEAD
 
     element.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
@@ -1831,10 +2424,16 @@ Note: The native app is not included with this extension and requires separate i
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
+=======
+    element.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 
   showError(message) {
     console.error('📷 OCR Error:', message);
+<<<<<<< HEAD
     
     const error = document.createElement('div');
     Object.assign(error.style, {
@@ -1854,10 +2453,20 @@ Note: The native app is not included with this extension and requires separate i
       whiteSpace: 'pre-line'
     });
 
+=======
+    const error = document.createElement('div');
+    Object.assign(error.style, {
+      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+      backgroundColor: '#d32f2f', color: '#fff', padding: '15px', borderRadius: '8px',
+      fontFamily: 'sans-serif', fontSize: '14px', textAlign: 'center', zIndex: '1000001',
+      maxWidth: '350px', whiteSpace: 'pre-line',
+    });
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     error.innerHTML = `
       <div style="margin-bottom: 10px;">❌ OCR Error</div>
       <div>${message}</div>
     `;
+<<<<<<< HEAD
 
     document.body.appendChild(error);
 
@@ -1924,6 +2533,25 @@ Note: The native app is not included with this extension and requires separate i
         el._dragCleanup();
       }
     });
+=======
+    document.body.appendChild(error);
+    setTimeout(() => error.remove(), 7000);
+  }
+
+  cancelOCRSelection() {
+    this.isSelecting = false;
+    this.isDragging = false;
+    document.body.style.cursor = '';
+    if (this.overlay) this.overlay.remove();
+    this.overlay = null;
+    document.querySelectorAll('.ocr-loading-message, .ocr-instruction-popup').forEach(el => el.remove());
+  }
+
+  cleanup() {
+    this.cancelOCRSelection();
+    const style = document.getElementById('ocr-handler-styles');
+    if (style) style.remove();
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 }
 

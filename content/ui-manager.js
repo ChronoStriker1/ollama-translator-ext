@@ -7,7 +7,12 @@ class UIManager {
     this.collapsed = true;
     this.contextInput = null;
     this.instructionInput = null;
+<<<<<<< HEAD
     this.currentTranslateInstruction = 'Translate the following text to natural English. Respond only with the English translation:';
+=======
+    this.currentTranslateInstruction =
+      'Translate the following text to natural English. Respond only with the English translation:';
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.isCustomInstructionActive = false;
     this.inlineReview = false;
     this.showLogs = false;
@@ -15,7 +20,11 @@ class UIManager {
     this.progressBar = null;
     this.reversePanel = null;
     this.revButton = null;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.loadSettings();
     this.createToolbar();
     this.setupEventListeners();
@@ -45,17 +54,30 @@ class UIManager {
       color: '#fff',
       padding: '8px',
       borderRadius: '8px',
+<<<<<<< HEAD
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       fontSize: '14px',
       boxShadow: '2px 2px 6px rgba(0,0,0,0.5)',
       opacity: '0.9',
       cursor: 'move'
+=======
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: '14px',
+      boxShadow: '2px 2px 6px rgba(0,0,0,0.5)',
+      opacity: '0.9',
+      cursor: 'move',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     this.setupDragging();
     this.createToolbarContent();
     this.createStyles();
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     document.body.appendChild(this.toolbar);
     this.updateCollapsed();
   }
@@ -157,13 +179,22 @@ class UIManager {
   }
 
   setupDragging() {
+<<<<<<< HEAD
     let isDragging = false, offsetX = 0, offsetY = 0;
     
     this.toolbar.addEventListener('mousedown', e => {
+=======
+    let isDragging = false,
+      offsetX = 0,
+      offsetY = 0;
+
+    this.toolbar.addEventListener('mousedown', (e) => {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       // Don't drag if clicking on interactive elements
       if (e.target.classList.contains('ollama-no-drag')) {
         return;
       }
+<<<<<<< HEAD
       
       const tag = e.target.tagName.toLowerCase();
       if (!this.collapsed && !['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'LABEL'].includes(tag)) {
@@ -172,6 +203,21 @@ class UIManager {
                                e.target.closest('.ollama-draggable') ||
                                (!e.target.classList.contains('ollama-no-drag') && !e.target.closest('.ollama-no-drag'));
         
+=======
+
+      const tag = e.target.tagName.toLowerCase();
+      if (
+        !this.collapsed &&
+        !['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'LABEL'].includes(tag)
+      ) {
+        // Check if clicking on draggable area or non-interactive area
+        const isDraggableArea =
+          e.target.classList.contains('ollama-draggable') ||
+          e.target.closest('.ollama-draggable') ||
+          (!e.target.classList.contains('ollama-no-drag') &&
+            !e.target.closest('.ollama-no-drag'));
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         if (isDraggableArea) {
           isDragging = true;
           offsetX = e.offsetX;
@@ -186,19 +232,44 @@ class UIManager {
         this.toolbar.style.cursor = 'grabbing';
       }
     });
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     document.addEventListener('mouseup', () => {
       if (isDragging) {
         isDragging = false;
         this.toolbar.style.cursor = this.collapsed ? 'pointer' : 'move';
       }
     });
+<<<<<<< HEAD
     
     document.addEventListener('mousemove', e => {
       if (isDragging) {
         const newLeft = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - this.toolbar.offsetWidth));
         const newTop = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - this.toolbar.offsetHeight));
         
+=======
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const newLeft = Math.max(
+          0,
+          Math.min(
+            e.clientX - offsetX,
+            window.innerWidth - this.toolbar.offsetWidth
+          )
+        );
+        const newTop = Math.max(
+          0,
+          Math.min(
+            e.clientY - offsetY,
+            window.innerHeight - this.toolbar.offsetHeight
+          )
+        );
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         this.toolbar.style.left = `${newLeft}px`;
         this.toolbar.style.top = `${newTop}px`;
       }
@@ -214,6 +285,7 @@ class UIManager {
       if (e.target.classList.contains('ollama-no-drag')) {
         return;
       }
+<<<<<<< HEAD
       
       // Check if clicking on interactive elements
       const tagName = e.target.tagName.toLowerCase();
@@ -226,6 +298,24 @@ class UIManager {
                              e.target.closest('.ollama-draggable') ||
                              (!e.target.classList.contains('ollama-no-drag') && !e.target.closest('.ollama-no-drag'));
       
+=======
+
+      // Check if clicking on interactive elements
+      const tagName = e.target.tagName.toLowerCase();
+      if (
+        ['input', 'button', 'select', 'textarea', 'label'].includes(tagName)
+      ) {
+        return;
+      }
+
+      // Check if target or parent has draggable class, or if no specific class, allow dragging
+      const isDraggableArea =
+        e.target.classList.contains('ollama-draggable') ||
+        e.target.closest('.ollama-draggable') ||
+        (!e.target.classList.contains('ollama-no-drag') &&
+          !e.target.closest('.ollama-no-drag'));
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (!isDraggableArea) {
         return;
       }
@@ -233,11 +323,19 @@ class UIManager {
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
+<<<<<<< HEAD
       
       const rect = element.getBoundingClientRect();
       startLeft = rect.left;
       startTop = rect.top;
       
+=======
+
+      const rect = element.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       element.style.cursor = 'grabbing';
       e.preventDefault();
     };
@@ -247,6 +345,7 @@ class UIManager {
 
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
+<<<<<<< HEAD
       
       const newLeft = Math.max(0, Math.min(startLeft + deltaX, window.innerWidth - element.offsetWidth));
       const newTop = Math.max(0, Math.min(startTop + deltaY, window.innerHeight - element.offsetHeight));
@@ -254,6 +353,21 @@ class UIManager {
       element.style.left = newLeft + 'px';
       element.style.top = newTop + 'px';
       
+=======
+
+      const newLeft = Math.max(
+        0,
+        Math.min(startLeft + deltaX, window.innerWidth - element.offsetWidth)
+      );
+      const newTop = Math.max(
+        0,
+        Math.min(startTop + deltaY, window.innerHeight - element.offsetHeight)
+      );
+
+      element.style.left = newLeft + 'px';
+      element.style.top = newTop + 'px';
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       e.preventDefault();
     };
 
@@ -267,7 +381,11 @@ class UIManager {
     element.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     // Store cleanup function
     element._dragCleanup = () => {
       element.removeEventListener('mousedown', handleMouseDown);
@@ -286,11 +404,19 @@ class UIManager {
       marginBottom: '6px',
       cursor: 'move',
       userSelect: 'none',
+<<<<<<< HEAD
       padding: '2px 0'
+=======
+      padding: '2px 0',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     // Toggle button
     const toggleBtn = document.createElement('button');
+<<<<<<< HEAD
+=======
+    toggleBtn.id = 'ollama-toolbar-toggle-btn'; // FIXED: Added unique ID
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     toggleBtn.className = 'ollama-no-drag';
     toggleBtn.textContent = '▼';
     Object.assign(toggleBtn.style, {
@@ -303,7 +429,11 @@ class UIManager {
       borderRadius: '3px',
       cursor: 'pointer',
       padding: '2px 6px',
+<<<<<<< HEAD
       outline: 'none'
+=======
+      outline: 'none',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     toggleBtn.onclick = () => {
@@ -346,7 +476,11 @@ class UIManager {
       borderRadius: '4px',
       padding: '4px',
       fontSize: '12px',
+<<<<<<< HEAD
       resize: 'vertical'
+=======
+      resize: 'vertical',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
     btnContext.onclick = () => {
       const show = this.contextInput.style.display === 'none';
@@ -375,7 +509,11 @@ class UIManager {
       borderRadius: '4px',
       padding: '4px',
       fontSize: '12px',
+<<<<<<< HEAD
       resize: 'vertical'
+=======
+      resize: 'vertical',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     // Instruction controls
@@ -383,7 +521,11 @@ class UIManager {
     Object.assign(instructionControls.style, {
       display: 'none',
       margin: '3px 0',
+<<<<<<< HEAD
       gap: '4px'
+=======
+      gap: '4px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const btnSaveInstruction = document.createElement('button');
@@ -396,7 +538,15 @@ class UIManager {
     btnRetranslate.className = 'ollama-no-drag';
     btnRetranslate.textContent = '🔄 Retranslate';
 
+<<<<<<< HEAD
     for (const btn of [btnSaveInstruction, btnResetInstruction, btnRetranslate]) {
+=======
+    for (const btn of [
+      btnSaveInstruction,
+      btnResetInstruction,
+      btnRetranslate,
+    ]) {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       Object.assign(btn.style, {
         margin: '2px',
         padding: '4px 8px',
@@ -406,17 +556,35 @@ class UIManager {
         color: '#fff',
         cursor: 'pointer',
         fontSize: '11px',
+<<<<<<< HEAD
         outline: 'none'
       });
     }
 
     instructionControls.append(btnSaveInstruction, btnResetInstruction, btnRetranslate);
+=======
+        outline: 'none',
+      });
+    }
+
+    instructionControls.append(
+      btnSaveInstruction,
+      btnResetInstruction,
+      btnRetranslate
+    );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
     btnSaveInstruction.onclick = () => {
       const newInstruction = this.instructionInput.value.trim();
       if (newInstruction) {
         this.currentTranslateInstruction = newInstruction;
+<<<<<<< HEAD
         chrome.storage.sync.set({ customTranslateInstruction: newInstruction });
+=======
+        chrome.storage.sync.set({
+          customTranslateInstruction: newInstruction,
+        });
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         this.logStatus('Translation instruction saved!');
         this.translationEngine.clearCache();
         this.translationEngine.resetConversation();
@@ -426,7 +594,12 @@ class UIManager {
     };
 
     btnResetInstruction.onclick = () => {
+<<<<<<< HEAD
       this.currentTranslateInstruction = 'Translate the following text to natural English. Respond only with the English translation:';
+=======
+      this.currentTranslateInstruction =
+        'Translate the following text to natural English. Respond only with the English translation:';
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       this.instructionInput.value = this.currentTranslateInstruction;
       chrome.storage.sync.remove('customTranslateInstruction');
       this.logStatus('Translation instruction reset to default!');
@@ -439,7 +612,11 @@ class UIManager {
         this.logStatus('No translated content to retranslate.');
         return;
       }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (window.ollamaTranslator.isTranslating) {
         this.logStatus('Translation already in progress...');
         return;
@@ -447,11 +624,21 @@ class UIManager {
 
       this.translationEngine.clearCache();
       this.translationEngine.resetConversation();
+<<<<<<< HEAD
       
       const nodesToRetranslate = [];
       window.ollamaTranslator.translatedNodes.forEach(node => {
         if (node && node.parentElement && node.ollamaId) {
           const textData = window.ollamaTranslator.originalTextMap.get(node.ollamaId);
+=======
+
+      const nodesToRetranslate = [];
+      window.ollamaTranslator.translatedNodes.forEach((node) => {
+        if (node && node.parentElement && node.ollamaId) {
+          const textData = window.ollamaTranslator.originalTextMap.get(
+            node.ollamaId
+          );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
           if (textData) {
             node.nodeValue = textData.original;
             nodesToRetranslate.push(node);
@@ -459,11 +646,21 @@ class UIManager {
           }
         }
       });
+<<<<<<< HEAD
       
       window.ollamaTranslator.translatedNodes.clear();
       
       this.logStatus(`Retranslating ${nodesToRetranslate.length} segments with current settings...`);
       
+=======
+
+      window.ollamaTranslator.translatedNodes.clear();
+
+      this.logStatus(
+        `Retranslating ${nodesToRetranslate.length} segments with current settings...`
+      );
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       await window.ollamaTranslator.runTranslation();
     };
 
@@ -476,7 +673,11 @@ class UIManager {
     const row1 = document.createElement('div');
     const row2 = document.createElement('div');
     const row3 = document.createElement('div');
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     for (const r of [row1, row2, row3]) {
       Object.assign(r.style, { display: 'flex', gap: '4px', width: '100%' });
     }
@@ -491,7 +692,14 @@ class UIManager {
     btnConversation.className = 'ollama-no-drag';
     btnConversation.textContent = '💬 Conversation';
     this.styleButton(btnConversation);
+<<<<<<< HEAD
     btnConversation.style.background = window.ollamaTranslator.useConversationMode ? '#2a7' : '#444';
+=======
+    btnConversation.style.background = window.ollamaTranslator
+      .useConversationMode
+      ? '#2a7'
+      : '#444';
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
     const btnInstruction = document.createElement('button');
     btnInstruction.className = 'ollama-no-drag';
@@ -538,6 +746,7 @@ class UIManager {
     };
 
     btnConversation.onclick = () => {
+<<<<<<< HEAD
       window.ollamaTranslator.useConversationMode = !window.ollamaTranslator.useConversationMode;
       btnConversation.style.background = window.ollamaTranslator.useConversationMode ? '#2a7' : '#444';
       btnConversation.textContent = window.ollamaTranslator.useConversationMode ? '💬 Conversation' : '💬 Individual';
@@ -547,6 +756,27 @@ class UIManager {
       }
       
       this.logStatus(`Conversation mode ${window.ollamaTranslator.useConversationMode ? 'enabled' : 'disabled'}`);
+=======
+      window.ollamaTranslator.useConversationMode =
+        !window.ollamaTranslator.useConversationMode;
+      btnConversation.style.background = window.ollamaTranslator
+        .useConversationMode
+        ? '#2a7'
+        : '#444';
+      btnConversation.textContent = window.ollamaTranslator.useConversationMode
+        ? '💬 Conversation'
+        : '💬 Individual';
+
+      if (!window.ollamaTranslator.useConversationMode) {
+        this.translationEngine.resetConversation();
+      }
+
+      this.logStatus(
+        `Conversation mode ${
+          window.ollamaTranslator.useConversationMode ? 'enabled' : 'disabled'
+        }`
+      );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     };
 
     btnInstruction.onclick = () => {
@@ -560,14 +790,27 @@ class UIManager {
     btnToggleText.onclick = () => {
       window.ollamaTranslator.toggleOriginalText();
       // Update button text based on current state
+<<<<<<< HEAD
       btnToggleText.textContent = window.ollamaTranslator.isShowingOriginal ? '🔁 Show Translation' : '🔁 Show Original';
+=======
+      btnToggleText.textContent = window.ollamaTranslator.isShowingOriginal
+        ? '🔁 Show Translation'
+        : '🔁 Show Original';
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     };
 
     btnReview.onclick = () => {
       this.inlineReview = !this.inlineReview;
       btnReview.style.background = this.inlineReview ? '#2a7' : '#444';
+<<<<<<< HEAD
       this.logStatus(`Inline review ${this.inlineReview ? 'enabled' : 'disabled'}`);
       
+=======
+      this.logStatus(
+        `Inline review ${this.inlineReview ? 'enabled' : 'disabled'}`
+      );
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (this.inlineReview) {
         this.showReviewInstructions();
       }
@@ -619,7 +862,12 @@ class UIManager {
       zIndex: '1000000',
       maxWidth: '400px',
       textAlign: 'center',
+<<<<<<< HEAD
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+=======
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     instructions.innerHTML = `
@@ -653,6 +901,7 @@ class UIManager {
   createReverseTranslationPanel() {
     const reversePanel = document.createElement('div');
     reversePanel.className = 'ollama-reverse-panel';
+<<<<<<< HEAD
     
     // Create header with close button
     const header = document.createElement('div');
@@ -662,13 +911,28 @@ class UIManager {
     title.className = 'ollama-reverse-title ollama-draggable';
     title.textContent = '🔄 Reverse Translation';
     
+=======
+
+    // Create header with close button
+    const header = document.createElement('div');
+    header.className = 'ollama-reverse-header';
+
+    const title = document.createElement('div');
+    title.className = 'ollama-reverse-title ollama-draggable';
+    title.textContent = '🔄 Reverse Translation';
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     const closeBtn = document.createElement('button');
     closeBtn.className = 'ollama-close-btn ollama-no-drag';
     closeBtn.textContent = '×';
     closeBtn.onclick = () => {
       reversePanel.style.display = 'none';
     };
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     header.appendChild(title);
     header.appendChild(closeBtn);
 
@@ -676,15 +940,29 @@ class UIManager {
     revInput.className = 'ollama-no-drag';
     revInput.placeholder = 'Type English text to translate...';
     Object.assign(revInput.style, {
+<<<<<<< HEAD
       width: '100%', height: '60px',
       background: '#333', color: '#fff',
       border: '1px solid #555', borderRadius: '4px',
       padding: '4px', fontSize: '12px', resize: 'vertical',
       marginBottom: '8px'
+=======
+      width: '100%',
+      height: '60px',
+      background: '#333',
+      color: '#fff',
+      border: '1px solid #555',
+      borderRadius: '4px',
+      padding: '4px',
+      fontSize: '12px',
+      resize: 'vertical',
+      marginBottom: '8px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const revButton = document.createElement('button');
     revButton.className = 'ollama-no-drag';
+<<<<<<< HEAD
     revButton.textContent = 'Translate to ' + (window.ollamaTranslator.sourceLang || 'Original Language');
     Object.assign(revButton.style, {
       width: '100%',
@@ -692,22 +970,50 @@ class UIManager {
       background: '#4caf50', border: 'none',
       borderRadius: '4px', color: '#fff',
       cursor: 'pointer', outline: 'none'
+=======
+    revButton.textContent =
+      'Translate to ' + (window.ollamaTranslator.sourceLang || 'Original Language');
+    Object.assign(revButton.style, {
+      width: '100%',
+      margin: '4px 0',
+      padding: '6px 8px',
+      background: '#4caf50',
+      border: 'none',
+      borderRadius: '4px',
+      color: '#fff',
+      cursor: 'pointer',
+      outline: 'none',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const revOutput = document.createElement('textarea');
     revOutput.className = 'ollama-no-drag';
     revOutput.readOnly = true;
     Object.assign(revOutput.style, {
+<<<<<<< HEAD
       width: '100%', height: '60px',
       background: '#333', color: '#fff',
       border: '1px solid #555', borderRadius: '4px',
       padding: '4px', fontSize: '12px', resize: 'vertical',
       marginTop: '8px'
+=======
+      width: '100%',
+      height: '60px',
+      background: '#333',
+      color: '#fff',
+      border: '1px solid #555',
+      borderRadius: '4px',
+      padding: '4px',
+      fontSize: '12px',
+      resize: 'vertical',
+      marginTop: '8px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     revButton.onclick = async () => {
       const txt = revInput.value.trim();
       if (!txt) return;
+<<<<<<< HEAD
       
       if (!window.ollamaTranslator.sourceLang) {
         revOutput.value = '❌ Please translate the page first to detect the source language.';
@@ -717,14 +1023,37 @@ class UIManager {
       const userContext = this.contextInput.value.trim();
       const cacheKey = Utils.getCacheKey(`reverse:${txt}`, userContext + window.ollamaTranslator.sourceLang, 'reverse');
       
+=======
+
+      if (!window.ollamaTranslator.sourceLang) {
+        revOutput.value =
+          '❌ Please translate the page first to detect the source language.';
+        return;
+      }
+
+      const userContext = this.contextInput.value.trim();
+      const cacheKey = Utils.getCacheKey(
+        `reverse:${txt}`,
+        userContext + window.ollamaTranslator.sourceLang,
+        'reverse'
+      );
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (this.translationEngine.translationCache.has(cacheKey)) {
         revOutput.value = this.translationEngine.translationCache.get(cacheKey);
         return;
       }
+<<<<<<< HEAD
       
       revButton.disabled = true;
       revButton.textContent = '…';
       
+=======
+
+      revButton.disabled = true;
+      revButton.textContent = '…';
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       try {
         let prompt = '';
         if (userContext) {
@@ -735,7 +1064,11 @@ class UIManager {
         const { response } = await this.translationEngine.requestTranslation({
           model: window.ollamaTranslator.model,
           prompt: prompt,
+<<<<<<< HEAD
           stream: false
+=======
+          stream: false,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         });
 
         let translated = Utils.cleanTranslationResponse(response);
@@ -745,16 +1078,28 @@ class UIManager {
         revOutput.value = '❌ ' + e.message;
       } finally {
         revButton.disabled = false;
+<<<<<<< HEAD
         revButton.textContent = 'Translate to ' + window.ollamaTranslator.sourceLang;
+=======
+        revButton.textContent =
+          'Translate to ' + window.ollamaTranslator.sourceLang;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       }
     };
 
     reversePanel.append(header, revInput, revButton, revOutput);
     document.body.appendChild(reversePanel);
+<<<<<<< HEAD
     
     // Make the panel draggable
     this.makeDraggable(reversePanel);
     
+=======
+
+    // Make the panel draggable
+    this.makeDraggable(reversePanel);
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.reversePanel = reversePanel;
     this.revButton = revButton;
   }
@@ -766,6 +1111,7 @@ class UIManager {
 
     const progress = document.createElement('div');
     Object.assign(progress.style, {
+<<<<<<< HEAD
       marginTop: '4px', height: '6px', background: '#555',
       borderRadius: '4px', overflow: 'hidden'
     });
@@ -776,13 +1122,34 @@ class UIManager {
       transition: 'width 0.3s ease'
     });
     
+=======
+      marginTop: '4px',
+      height: '6px',
+      background: '#555',
+      borderRadius: '4px',
+      overflow: 'hidden',
+    });
+
+    this.progressBar = document.createElement('div');
+    Object.assign(this.progressBar.style, {
+      height: '100%',
+      width: '0%',
+      background: '#4caf50',
+      transition: 'width 0.3s ease',
+    });
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     progress.appendChild(this.progressBar);
     container.append(this.status, progress);
   }
 
   setupEventListeners() {
     // Keyboard shortcuts
+<<<<<<< HEAD
     document.addEventListener('keydown', e => {
+=======
+    document.addEventListener('keydown', (e) => {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (e.altKey && !e.ctrlKey && !e.shiftKey) {
         switch (e.key.toLowerCase()) {
           case 't':
@@ -799,7 +1166,13 @@ class UIManager {
             e.preventDefault();
             this.showLogs = !this.showLogs;
             this.translationEngine.showLogs = this.showLogs;
+<<<<<<< HEAD
             this.logStatus(`Debug logs ${this.showLogs ? 'enabled' : 'disabled'}`);
+=======
+            this.logStatus(
+              `Debug logs ${this.showLogs ? 'enabled' : 'disabled'}`
+            );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
             break;
           case 'r':
             e.preventDefault();
@@ -811,7 +1184,11 @@ class UIManager {
 
     // Message listener for selected text translation
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+<<<<<<< HEAD
       if (msg.action === "translate-selected-text") {
+=======
+      if (msg.action === 'translate-selected-text') {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         this.translateSelectedText(msg.selectedText);
       }
     });
@@ -831,6 +1208,7 @@ class UIManager {
 
     try {
       const userContext = this.contextInput.value.trim();
+<<<<<<< HEAD
       const translated = await this.translationEngine.translateTextWithContext(
         textToTranslate, 
         userContext, 
@@ -844,6 +1222,22 @@ class UIManager {
         window.ollamaTranslator.translationLog.push({ 
           original: textToTranslate, 
           translated: translated 
+=======
+      const translated =
+        await this.translationEngine.translateTextWithContext(
+          textToTranslate,
+          userContext,
+          this.currentTranslateInstruction,
+          false
+        );
+
+      this.showSelectionPopup(textToTranslate, translated);
+
+      if (window.ollamaTranslator.translationLog) {
+        window.ollamaTranslator.translationLog.push({
+          original: textToTranslate,
+          translated: translated,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         });
       }
 
@@ -867,7 +1261,12 @@ class UIManager {
       maxWidth: '350px',
       fontSize: '14px',
       lineHeight: '1.4',
+<<<<<<< HEAD
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+=======
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     // Make popup draggable
@@ -875,7 +1274,11 @@ class UIManager {
 
     let targetX = window.innerWidth / 2;
     let targetY = window.innerHeight / 2;
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     try {
       const selection = window.getSelection();
       if (selection.rangeCount > 0) {
@@ -892,8 +1295,19 @@ class UIManager {
 
     const popupWidth = 350;
     const popupHeight = 150;
+<<<<<<< HEAD
     popup.style.left = `${Math.max(10, Math.min(targetX - popupWidth / 2, window.innerWidth - popupWidth - 10))}px`;
     popup.style.top = `${Math.max(10, Math.min(targetY, window.innerHeight - popupHeight - 10))}px`;
+=======
+    popup.style.left = `${Math.max(
+      10,
+      Math.min(targetX - popupWidth / 2, window.innerWidth - popupWidth - 10)
+    )}px`;
+    popup.style.top = `${Math.max(
+      10,
+      Math.min(targetY, window.innerHeight - popupHeight - 10)
+    )}px`;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
     // Add draggable header
     const dragHeader = document.createElement('div');
@@ -905,7 +1319,11 @@ class UIManager {
       cursor: 'move',
       userSelect: 'none',
       padding: '4px 0',
+<<<<<<< HEAD
       borderBottom: '1px solid #555'
+=======
+      borderBottom: '1px solid #555',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const originalDiv = document.createElement('div');
@@ -914,13 +1332,21 @@ class UIManager {
       color: '#aaa',
       marginBottom: '10px',
       fontStyle: 'italic',
+<<<<<<< HEAD
       fontSize: '12px'
+=======
+      fontSize: '12px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const translatedDiv = document.createElement('div');
     translatedDiv.textContent = translatedText;
     Object.assign(translatedDiv.style, {
+<<<<<<< HEAD
       marginBottom: '10px'
+=======
+      marginBottom: '10px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
 
     const closeBtn = document.createElement('button');
@@ -937,7 +1363,11 @@ class UIManager {
       height: '20px',
       borderRadius: '3px',
       cursor: 'pointer',
+<<<<<<< HEAD
       fontSize: '14px'
+=======
+      fontSize: '14px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
     closeBtn.onclick = () => popup.remove();
 
@@ -954,12 +1384,26 @@ class UIManager {
   toggleReversePanel() {
     const show = this.reversePanel.style.display === 'none';
     this.reversePanel.style.display = show ? 'block' : 'none';
+<<<<<<< HEAD
     
     if (show) {
       const rect = this.toolbar.getBoundingClientRect();
       this.reversePanel.style.left = `${Math.min(rect.right + 10, window.innerWidth - 300)}px`;
       this.reversePanel.style.top = `${rect.top}px`;
       this.revButton.textContent = 'Translate to ' + (window.ollamaTranslator.sourceLang || 'Original Language');
+=======
+
+    if (show) {
+      const rect = this.toolbar.getBoundingClientRect();
+      this.reversePanel.style.left = `${Math.min(
+        rect.right + 10,
+        window.innerWidth - 300
+      )}px`;
+      this.reversePanel.style.top = `${rect.top}px`;
+      this.revButton.textContent =
+        'Translate to ' +
+        (window.ollamaTranslator.sourceLang || 'Original Language');
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     }
   }
 
@@ -968,21 +1412,37 @@ class UIManager {
     const json = JSON.stringify(data, null, 2);
     const csv = [
       ['original', 'translated'],
+<<<<<<< HEAD
       ...data.map(o => [o.original, o.translated])
     ]
       .map(r => r.map(s => `"${s.replace(/"/g, '""')}"`).join(','))
       .join('\n');
     
+=======
+      ...data.map((o) => [o.original, o.translated]),
+    ]
+      .map((r) => r.map((s) => `"${s.replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     const a1 = document.createElement('a');
     a1.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
     a1.download = 'translation-log.json';
     a1.click();
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     const a2 = document.createElement('a');
     a2.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a2.download = 'translation-log.csv';
     a2.click();
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     this.logStatus(`Exported ${data.length} translations to JSON and CSV files.`);
   }
 
@@ -997,11 +1457,16 @@ class UIManager {
       cursor: 'pointer',
       flex: '1 1 auto',
       outline: 'none',
+<<<<<<< HEAD
       fontSize: '12px'
+=======
+      fontSize: '12px',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
   }
 
   updateCollapsed() {
+<<<<<<< HEAD
       const header = this.toolbar.querySelector('div');
       const container = this.toolbar.querySelector('div:nth-child(2)');
       const toggleBtn = this.toolbar.querySelector('button');
@@ -1067,6 +1532,73 @@ class UIManager {
   ensureInView() {
     const r = this.toolbar.getBoundingClientRect();
     let x = r.left, y = r.top;
+=======
+    const header = this.toolbar.querySelector('div');
+    const container = this.toolbar.querySelector('div:nth-child(2)');
+    const toggleBtn = document.getElementById('ollama-toolbar-toggle-btn'); // FIXED: Use unique ID
+
+    if (this.collapsed) {
+      // Position in top-left corner, not docked to edge
+      this.toolbar.style.top = '20px';
+      this.toolbar.style.left = '20px';
+      this.toolbar.style.right = 'auto';
+      this.toolbar.style.cursor = 'pointer';
+      this.toolbar.style.padding = '4px';
+      this.toolbar.style.width = '32px';
+      this.toolbar.style.height = '32px';
+      this.toolbar.style.borderRadius = '50%';
+
+      header.style.display = 'none';
+      container.style.display = 'none';
+
+      Object.assign(toggleBtn.style, {
+        position: 'static',
+        width: '100%',
+        height: '100%',
+        padding: '0',
+        fontSize: '18px',
+        lineHeight: '1',
+        background: 'transparent',
+        border: 'none',
+        borderRadius: '50%',
+      });
+
+      // Use globe emoji for collapsed state
+      toggleBtn.innerHTML = '<div class="ollama-globe-icon">🌐</div>';
+    } else {
+      this.toolbar.style.cursor = 'move';
+      this.toolbar.style.padding = '8px';
+      this.toolbar.style.width = 'auto';
+      this.toolbar.style.height = 'auto';
+      this.toolbar.style.borderRadius = '8px';
+
+      header.style.display = '';
+      container.style.display = '';
+
+      Object.assign(toggleBtn.style, {
+        position: 'absolute',
+        right: '10px',
+        top: '10px',
+        width: '20px',
+        height: '20px',
+        padding: '2px',
+        fontSize: '12px',
+        lineHeight: '1',
+        background: '#444',
+        border: 'none',
+        borderRadius: '3px',
+      });
+      toggleBtn.textContent = '▼';
+
+      this.ensureInView();
+    }
+  }
+
+  ensureInView() {
+    const r = this.toolbar.getBoundingClientRect();
+    let x = r.left,
+      y = r.top;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     if (r.right > innerWidth) x = innerWidth - r.width - 10;
     if (r.bottom > innerHeight) y = innerHeight - r.height - 10;
     if (r.left < 0) x = 10;
@@ -1077,10 +1609,19 @@ class UIManager {
 
   updateHighlighting() {
     if (this.showLogs) {
+<<<<<<< HEAD
       console.log(`🎨 Updating highlighting, showLogs=${this.showLogs}, nodes=${window.ollamaTranslator.translatedNodes.size}`);
     }
 
     window.ollamaTranslator.translatedNodes.forEach(node => {
+=======
+      console.log(
+        `🎨 Updating highlighting, showLogs=${this.showLogs}, nodes=${window.ollamaTranslator.translatedNodes.size}`
+      );
+    }
+
+    window.ollamaTranslator.translatedNodes.forEach((node) => {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (node && node.parentElement) {
         if (this.showLogs) {
           node.parentElement.classList.add('ollama-highlight');
@@ -1116,6 +1657,7 @@ class UIManager {
     if (this.toolbar && this.toolbar.parentNode) {
       this.toolbar.remove();
     }
+<<<<<<< HEAD
     
     if (this.reversePanel && this.reversePanel.parentNode) {
       this.reversePanel.remove();
@@ -1123,6 +1665,15 @@ class UIManager {
     
     // Clean up any draggable elements
     document.querySelectorAll('[data-ollama-draggable]').forEach(el => {
+=======
+
+    if (this.reversePanel && this.reversePanel.parentNode) {
+      this.reversePanel.remove();
+    }
+
+    // Clean up any draggable elements
+    document.querySelectorAll('[data-ollama-draggable]').forEach((el) => {
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (el._dragCleanup) {
         el._dragCleanup();
       }

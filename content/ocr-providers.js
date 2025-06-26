@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // OCR Providers - Unified interface for different OCR engines - FIXED VERSION
 class OCRProviders {
   constructor() {
@@ -8,6 +9,73 @@ class OCRProviders {
     this.initializeProviderClasses();
   }
 
+=======
+// OCR Providers - Unified interface with language code conversion - VISION OPTION REMOVED
+class OCRProviders {
+  constructor() {
+    this.providers = {};
+    this.currentProvider = 'tesseract';
+
+    // Language code conversion maps
+    this.languageConversions = {
+      // Tesseract to macOS mapping
+      tesseractToMacOS: {
+        eng: 'en-US',
+        jpn: 'ja-JP',
+        chi_sim: 'zh-Hans',
+        chi_tra: 'zh-Hant',
+        kor: 'ko-KR',
+        rus: 'ru-RU',
+        ara: 'ar-SA',
+        tha: 'th-TH',
+        vie: 'vi-VN',
+        deu: 'de-DE',
+        fra: 'fr-FR',
+        spa: 'es-ES',
+        ita: 'it-IT',
+        por: 'pt-BR',
+        auto: 'auto',
+      },
+      // macOS to Tesseract mapping
+      macOSToTesseract: {
+        'en-US': 'eng',
+        'en-GB': 'eng',
+        'ja-JP': 'jpn',
+        'zh-Hans': 'chi_sim',
+        'zh-Hant': 'chi_tra',
+        'ko-KR': 'kor',
+        'ru-RU': 'rus',
+        'ar-SA': 'ara',
+        'th-TH': 'tha',
+        'vi-VN': 'vie',
+        'de-DE': 'deu',
+        'fr-FR': 'fra',
+        'es-ES': 'spa',
+        'it-IT': 'ita',
+        'pt-BR': 'por',
+        auto: 'auto',
+      },
+    };
+
+    this.initializeProviderClasses();
+  }
+
+  // Convert language codes between formats
+  convertLanguageCode(code, fromFormat, toFormat) {
+    if (fromFormat === toFormat || !code) return code;
+
+    if (fromFormat === 'tesseract' && toFormat === 'macos') {
+      return this.languageConversions.tesseractToMacOS[code] || code;
+    }
+
+    if (fromFormat === 'macos' && toFormat === 'tesseract') {
+      return this.languageConversions.macOSToTesseract[code] || code;
+    }
+
+    return code;
+  }
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   initializeProviderClasses() {
     try {
       this.providers.tesseract = new TesseractProvider();
@@ -23,12 +91,22 @@ class OCRProviders {
       this.providers.macos_live_text = new StubProvider('macOS Live Text');
     }
 
+<<<<<<< HEAD
     try {
       this.providers.macos_vision = new MacOSVisionProvider();
     } catch (error) {
       console.warn('Failed to initialize macOS Vision provider:', error);
       this.providers.macos_vision = new StubProvider('macOS Vision Framework');
     }
+=======
+    // **REMOVED**: The redundant macOS Vision provider is no longer initialized.
+    // try {
+    //   this.providers.macos_vision = new MacOSVisionProvider();
+    // } catch (error) {
+    //   console.warn('Failed to initialize macOS Vision provider:', error);
+    //   this.providers.macos_vision = new StubProvider('macOS Vision Framework');
+    // }
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
     try {
       this.providers.google_cloud = new GoogleCloudVisionProvider();
@@ -42,9 +120,15 @@ class OCRProviders {
     if (!this.providers[providerName]) {
       throw new Error(`Unknown OCR provider: ${providerName}`);
     }
+<<<<<<< HEAD
     
     this.currentProvider = providerName;
     
+=======
+
+    this.currentProvider = providerName;
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     try {
       return await this.providers[providerName].initialize();
     } catch (error) {
@@ -58,6 +142,7 @@ class OCRProviders {
     if (!provider) {
       throw new Error(`Provider ${this.currentProvider} not available`);
     }
+<<<<<<< HEAD
     
     // Check if provider is initialized, if not try to initialize it
     if (!provider.isInitialized) {
@@ -70,6 +155,44 @@ class OCRProviders {
     }
     
     return await provider.recognize(canvas, options);
+=======
+
+    console.log(`📷 OCRProviders: Using provider ${this.currentProvider}`);
+
+    // Create a mutable copy of options for conversion
+    let finalOptions = { ...options };
+
+    // Convert language code if the target provider is macOS
+    if (options.language && this.currentProvider.startsWith('macos_')) {
+      const originalLang = options.language;
+      const convertedLang = this.convertLanguageCode(
+        originalLang,
+        'tesseract',
+        'macos'
+      );
+      finalOptions.language = convertedLang;
+      console.log(
+        `📷 Converted language from "${originalLang}" to "${convertedLang}" for ${this.currentProvider}`
+      );
+    }
+
+    if (!provider.isInitialized) {
+      console.log(
+        `📷 Provider ${this.currentProvider} not initialized, attempting to initialize...`
+      );
+      try {
+        // Pass the final, converted language for initialization if needed
+        await provider.initialize(finalOptions.language);
+      } catch (error) {
+        throw new Error(
+          `Failed to initialize ${this.currentProvider}: ${error.message}`
+        );
+      }
+    }
+
+    // Pass the final, converted options to the provider's recognize method
+    return await provider.recognize(canvas, finalOptions);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 
   getAvailableProviders() {
@@ -80,7 +203,11 @@ class OCRProviders {
         description: provider.getDescription(),
         isAvailable: provider.isAvailable(),
         requiresSetup: provider.requiresSetup(),
+<<<<<<< HEAD
         supportedLanguages: provider.getSupportedLanguages()
+=======
+        supportedLanguages: provider.getSupportedLanguages(),
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       };
     }
     return available;
@@ -182,6 +309,7 @@ class TesseractProvider extends BaseOCRProvider {
     this.recognitionCount = 0;
     this.maxRecognitionsBeforeReset = 3;
     this.availableLanguages = {
+<<<<<<< HEAD
       'eng': 'English',
       'jpn': 'Japanese',
       'chi_sim': 'Chinese Simplified',
@@ -196,6 +324,22 @@ class TesseractProvider extends BaseOCRProvider {
       'spa': 'Spanish',
       'ita': 'Italian',
       'por': 'Portuguese'
+=======
+      eng: 'English',
+      jpn: 'Japanese',
+      chi_sim: 'Chinese Simplified',
+      chi_tra: 'Chinese Traditional',
+      kor: 'Korean',
+      rus: 'Russian',
+      ara: 'Arabic',
+      tha: 'Thai',
+      vie: 'Vietnamese',
+      deu: 'German',
+      fra: 'French',
+      spa: 'Spanish',
+      ita: 'Italian',
+      por: 'Portuguese',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     };
   }
 
@@ -221,6 +365,7 @@ class TesseractProvider extends BaseOCRProvider {
       language = 'eng'; // Default to English if auto is requested
       console.log('📷 Tesseract: Auto language not supported, using English');
     }
+<<<<<<< HEAD
     
     // Check if language is supported
     if (!this.availableLanguages[language]) {
@@ -232,6 +377,23 @@ class TesseractProvider extends BaseOCRProvider {
       return true;
     }
   
+=======
+
+    // Check if language is supported
+    if (!this.availableLanguages[language]) {
+      console.warn(
+        '📷 Tesseract: Language not supported:',
+        language,
+        'using English'
+      );
+      language = 'eng';
+    }
+
+    if (this.isInitialized && this.currentLanguage === language) {
+      return true;
+    }
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     if (this.worker) {
       try {
         await this.worker.terminate();
@@ -240,6 +402,7 @@ class TesseractProvider extends BaseOCRProvider {
       }
       this.worker = null;
     }
+<<<<<<< HEAD
   
     console.log('📷 Tesseract: Initializing with language:', language);
   
@@ -261,6 +424,29 @@ class TesseractProvider extends BaseOCRProvider {
         preserve_interword_spaces: '1'
       });
   
+=======
+
+    console.log('📷 Tesseract: Initializing with language:', language);
+
+    try {
+      this.worker = await Tesseract.createWorker({
+        logger: (m) => {
+          if (window.ollamaTranslator?.translationEngine?.showLogs) {
+            console.log('Tesseract:', m);
+          }
+        },
+      });
+
+      await this.worker.loadLanguage(language);
+      await this.worker.initialize(language);
+
+      await this.worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+        tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
+        preserve_interword_spaces: '1',
+      });
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       this.currentLanguage = language;
       this.isInitialized = true;
       this.recognitionCount = 0;
@@ -292,7 +478,11 @@ class TesseractProvider extends BaseOCRProvider {
       }
 
       await this.worker.setParameters({
+<<<<<<< HEAD
         tessedit_pageseg_mode: psmMode
+=======
+        tessedit_pageseg_mode: psmMode,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       });
 
       const result = await this.worker.recognize(canvas);
@@ -301,7 +491,11 @@ class TesseractProvider extends BaseOCRProvider {
       return {
         text: result.data.text.trim(),
         confidence: result.data.confidence,
+<<<<<<< HEAD
         words: result.data.words
+=======
+        words: result.data.words,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       };
     } catch (error) {
       console.error('Tesseract recognition failed:', error);
@@ -330,6 +524,7 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
   }
 
   getName() {
+<<<<<<< HEAD
     return 'macOS Live Text';
   }
 
@@ -342,6 +537,23 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
            typeof chrome !== 'undefined' && 
            chrome.runtime && 
            chrome.runtime.sendMessage;
+=======
+    return 'macOS Native OCR'; // **CHANGED**: More generic name
+  }
+
+  getDescription() {
+    // **CHANGED**: Updated description to be more encompassing
+    return 'Native macOS OCR using the Vision framework. Fast and accurate, requires macOS 12+ and native app.';
+  }
+
+  isAvailable() {
+    return (
+      navigator.platform.includes('Mac') &&
+      typeof chrome !== 'undefined' &&
+      chrome.runtime &&
+      chrome.runtime.sendMessage
+    );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 
   requiresSetup() {
@@ -350,7 +562,11 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
 
   getSupportedLanguages() {
     return {
+<<<<<<< HEAD
       'auto': 'Auto-detect',
+=======
+      auto: 'Auto-detect',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       'en-US': 'English (US)',
       'en-GB': 'English (UK)',
       'ja-JP': 'Japanese',
@@ -366,12 +582,17 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
       'ar-SA': 'Arabic',
       'hi-IN': 'Hindi',
       'th-TH': 'Thai',
+<<<<<<< HEAD
       'vi-VN': 'Vietnamese'
+=======
+      'vi-VN': 'Vietnamese',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     };
   }
 
   async initialize() {
     try {
+<<<<<<< HEAD
       console.log('📷 Live Text: Checking availability...');
       const response = await this.sendNativeMessage({ action: 'check_availability' });
       
@@ -382,12 +603,33 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
         return true;
       } else {
         console.warn('📷 Live Text: Host not available:', response?.error || 'Unknown error');
+=======
+      console.log('📷 macOS OCR: Checking availability...');
+      const response = await this.sendNativeMessage({
+        action: 'check_availability',
+      });
+
+      if (response && response.available) {
+        this.hostAvailable = true;
+        this.isInitialized = true;
+        console.log('📷 macOS OCR: Successfully initialized');
+        return true;
+      } else {
+        console.warn(
+          '📷 macOS OCR: Host not available:',
+          response?.error || 'Unknown error'
+        );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         this.hostAvailable = false;
         this.isInitialized = false;
         return false;
       }
     } catch (error) {
+<<<<<<< HEAD
       console.warn('📷 Live Text: Initialization failed:', error.message);
+=======
+      console.warn('📷 macOS OCR: Initialization failed:', error.message);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       this.hostAvailable = false;
       this.isInitialized = false;
       return false;
@@ -395,6 +637,7 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
   }
 
   async recognize(canvas, options = {}) {
+<<<<<<< HEAD
     // Try to initialize if not already done
     if (!this.isInitialized) {
       console.log('📷 Live Text: Not initialized, attempting to initialize...');
@@ -411,17 +654,39 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
       const maxSize = 1024; // Max dimension
       let targetCanvas = canvas;
       
+=======
+    if (!this.isInitialized) {
+      console.log('📷 macOS OCR: Not initialized, attempting to initialize...');
+      const initResult = await this.initialize();
+      if (!initResult) {
+        throw new Error(
+          'macOS Native OCR not available - native messaging host not responding'
+        );
+      }
+    }
+
+    let imageData;
+    try {
+      const maxSize = 1024;
+      let targetCanvas = canvas;
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       if (canvas.width > maxSize || canvas.height > maxSize) {
         const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
         targetCanvas = document.createElement('canvas');
         targetCanvas.width = canvas.width * scale;
         targetCanvas.height = canvas.height * scale;
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         const ctx = targetCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(canvas, 0, 0, targetCanvas.width, targetCanvas.height);
       }
+<<<<<<< HEAD
       
       imageData = targetCanvas.toDataURL('image/png', 0.9);
       console.log('📷 Live Text: Optimized image data size:', imageData.length, 'characters');
@@ -443,17 +708,54 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
     try {
       const response = await this.sendNativeMessage(message);
       console.log('📷 Live Text: Raw response received:', response);
+=======
+
+      imageData = targetCanvas.toDataURL('image/png', 0.9);
+      console.log(
+        '📷 macOS OCR: Optimized image data size:',
+        imageData.length,
+        'characters'
+      );
+    } catch (error) {
+      console.error('📷 macOS OCR: Image processing error:', error);
+      throw new Error('Failed to process image for macOS OCR: ' + error.message);
+    }
+
+    // The language code is already converted by the OCRProviders class.
+    const message = {
+      action: 'live_text_ocr', // Action name remains the same for the host
+      image: imageData,
+      language: options.language || 'auto',
+      orientation: options.orientation || 'auto',
+    };
+
+    console.log(
+      '📷 macOS OCR: Sending OCR request with language:',
+      options.language
+    );
+
+    try {
+      const response = await this.sendNativeMessage(message);
+      console.log('📷 macOS OCR: Raw response received:', response);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
       if (!response) {
         throw new Error('No response from native messaging host');
       }
 
       if (response.error) {
+<<<<<<< HEAD
         console.error('📷 Live Text: Native host error:', response.error);
         throw new Error('Live Text error: ' + response.error);
       }
 
       // Handle different response formats
+=======
+        console.error('📷 macOS OCR: Native host error:', response.error);
+        throw new Error('macOS OCR error: ' + response.error);
+      }
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       let text = '';
       let confidence = 0;
       let words = [];
@@ -470,20 +772,32 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
         confidence = response.result.confidence || (text.length > 0 ? 95 : 0);
         words = response.result.words || [];
       } else {
+<<<<<<< HEAD
         console.warn('📷 Live Text: Unexpected response format:', response);
+=======
+        console.warn('📷 macOS OCR: Unexpected response format:', response);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         text = '';
         confidence = 0;
       }
 
+<<<<<<< HEAD
       console.log('📷 Live Text: Processed result:', {
         text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
         confidence: confidence,
         wordCount: words.length
+=======
+      console.log('📷 macOS OCR: Processed result:', {
+        text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+        confidence: confidence,
+        wordCount: words.length,
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       });
 
       return {
         text: text,
         confidence: confidence,
+<<<<<<< HEAD
         words: words
       };
     } catch (error) {
@@ -492,18 +806,33 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
       this.isInitialized = false;
       this.hostAvailable = false;
       throw new Error('macOS Live Text recognition failed: ' + error.message);
+=======
+        words: words,
+      };
+    } catch (error) {
+      console.error('📷 macOS OCR recognition error:', error);
+      this.isInitialized = false;
+      this.hostAvailable = false;
+      throw new Error('macOS Native OCR recognition failed: ' + error.message);
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     }
   }
 
   async sendNativeMessage(message) {
     return new Promise((resolve, reject) => {
+<<<<<<< HEAD
       console.log('📷 Sending native message to Live Text host...');
       
       // Set a timeout for the native messaging
+=======
+      console.log('📷 Sending native message to macOS host...');
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       const timeout = setTimeout(() => {
         console.error('📷 Native messaging timeout');
         reject(new Error('Native messaging timeout after 15 seconds'));
       }, 15000);
+<<<<<<< HEAD
       
       chrome.runtime.sendMessage({
         action: 'sendNativeMessage',
@@ -540,10 +869,53 @@ class MacOSLiveTextProvider extends BaseOCRProvider {
         
         resolve(response.response);
       });
+=======
+
+      console.log('📷 macOS OCR: Sending to com.ollama.translator.ocr host');
+      chrome.runtime.sendMessage(
+        {
+          action: 'sendNativeMessage',
+          hostName: 'com.ollama.translator.ocr',
+          nativeMessage: message,
+        },
+        (response) => {
+          clearTimeout(timeout);
+
+          console.log('📷 Background response received:', response);
+
+          if (chrome.runtime.lastError) {
+            console.error('📷 Chrome runtime error:', chrome.runtime.lastError);
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+
+          if (!response) {
+            console.error('📷 No response from background script');
+            reject(new Error('No response from background script'));
+            return;
+          }
+
+          if (response.error) {
+            console.error('📷 Background script error:', response.error);
+            reject(new Error(response.error));
+            return;
+          }
+
+          if (response.response === undefined) {
+            console.error('📷 No response data from native host');
+            reject(new Error('No response data from native host'));
+            return;
+          }
+
+          resolve(response.response);
+        }
+      );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     });
   }
 }
 
+<<<<<<< HEAD
 // macOS Vision Framework Provider - FIXED VERSION
 class MacOSVisionProvider extends BaseOCRProvider {
   constructor() {
@@ -712,6 +1084,9 @@ class MacOSVisionProvider extends BaseOCRProvider {
     });
   }
 }
+=======
+// **REMOVED**: The entire MacOSVisionProvider class is gone.
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
 
 // Google Cloud Vision Provider - FIXED VERSION
 class GoogleCloudVisionProvider extends BaseOCRProvider {
@@ -729,7 +1104,11 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
   }
 
   isAvailable() {
+<<<<<<< HEAD
     return true; // Available everywhere with internet
+=======
+    return true;
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
   }
 
   requiresSetup() {
@@ -738,6 +1117,7 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
 
   getSupportedLanguages() {
     return {
+<<<<<<< HEAD
       'auto': 'Auto-detect',
       'en': 'English',
       'ja': 'Japanese',
@@ -754,17 +1134,45 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
       'hi': 'Hindi',
       'th': 'Thai',
       'vi': 'Vietnamese'
+=======
+      auto: 'Auto-detect',
+      en: 'English',
+      ja: 'Japanese',
+      zh: 'Chinese',
+      'zh-TW': 'Chinese Traditional',
+      ko: 'Korean',
+      es: 'Spanish',
+      fr: 'French',
+      de: 'German',
+      it: 'Italian',
+      pt: 'Portuguese',
+      ru: 'Russian',
+      ar: 'Arabic',
+      hi: 'Hindi',
+      th: 'Thai',
+      vi: 'Vietnamese',
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     };
   }
 
   async initialize(apiKey) {
     if (!apiKey) {
+<<<<<<< HEAD
       // Try to get API key from storage
+=======
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       try {
         const result = await chrome.storage.sync.get(['googleCloudApiKey']);
         apiKey = result.googleCloudApiKey;
       } catch (error) {
+<<<<<<< HEAD
         console.warn('Failed to load Google Cloud API key from storage:', error);
+=======
+        console.warn(
+          'Failed to load Google Cloud API key from storage:',
+          error
+        );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       }
     }
 
@@ -775,8 +1183,12 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
     }
 
     this.apiKey = apiKey;
+<<<<<<< HEAD
     
     // Test API key
+=======
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     try {
       const testResponse = await fetch(
         `https://vision.googleapis.com/v1/images:annotate?key=${this.apiKey}`,
@@ -784,11 +1196,24 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+<<<<<<< HEAD
             requests: [{
               image: { content: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' },
               features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
             }]
           })
+=======
+            requests: [
+              {
+                image: {
+                  content:
+                    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+                },
+                features: [{ type: 'TEXT_DETECTION', maxResults: 1 }],
+              },
+            ],
+          }),
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         }
       );
 
@@ -800,7 +1225,14 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
       this.isInitialized = true;
       return true;
     } catch (error) {
+<<<<<<< HEAD
       console.warn('📷 Google Cloud Vision: API key validation failed:', error.message);
+=======
+      console.warn(
+        '📷 Google Cloud Vision: API key validation failed:',
+        error.message
+      );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       this.isInitialized = false;
       return false;
     }
@@ -808,6 +1240,7 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
 
   async recognize(canvas, options = {}) {
     if (!this.isInitialized || !this.apiKey) {
+<<<<<<< HEAD
       // Try to initialize
       const initResult = await this.initialize();
       if (!initResult) {
@@ -827,6 +1260,28 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
     };
 
     // Add language hints if specified
+=======
+      const initResult = await this.initialize();
+      if (!initResult) {
+        throw new Error(
+          'Google Cloud Vision not available - API key required'
+        );
+      }
+    }
+
+    const imageData = canvas.toDataURL('image/png').split(',')[1];
+
+    const requestBody = {
+      requests: [
+        {
+          image: { content: imageData },
+          features: [{ type: 'TEXT_DETECTION', maxResults: 50 }],
+          imageContext: {},
+        },
+      ],
+    };
+
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     if (options.language && options.language !== 'auto') {
       requestBody.requests[0].imageContext.languageHints = [options.language];
     }
@@ -837,7 +1292,11 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+<<<<<<< HEAD
           body: JSON.stringify(requestBody)
+=======
+          body: JSON.stringify(requestBody),
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
         }
       );
 
@@ -853,6 +1312,7 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
         return { text: '', confidence: 0, words: [] };
       }
 
+<<<<<<< HEAD
       // First annotation contains full text
       const fullText = annotations[0].description || '';
       
@@ -866,15 +1326,46 @@ class GoogleCloudVisionProvider extends BaseOCRProvider {
           x1: Math.max(...annotation.boundingPoly.vertices.map(v => v.x || 0)),
           y1: Math.max(...annotation.boundingPoly.vertices.map(v => v.y || 0))
         }
+=======
+      const fullText = annotations[0].description || '';
+
+      const words = annotations.slice(1).map((annotation) => ({
+        text: annotation.description,
+        confidence: 100,
+        bbox: {
+          x0: Math.min(
+            ...annotation.boundingPoly.vertices.map((v) => v.x || 0)
+          ),
+          y0: Math.min(
+            ...annotation.boundingPoly.vertices.map((v) => v.y || 0)
+          ),
+          x1: Math.max(
+            ...annotation.boundingPoly.vertices.map((v) => v.x || 0)
+          ),
+          y1: Math.max(
+            ...annotation.boundingPoly.vertices.map((v) => v.y || 0)
+          ),
+        },
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
       }));
 
       return {
         text: fullText,
+<<<<<<< HEAD
         confidence: 95, // Google Vision is generally very accurate
         words: words
       };
     } catch (error) {
       throw new Error('Google Cloud Vision recognition failed: ' + error.message);
+=======
+        confidence: 95,
+        words: words,
+      };
+    } catch (error) {
+      throw new Error(
+        'Google Cloud Vision recognition failed: ' + error.message
+      );
+>>>>>>> 3216674 (Debugged Vision about as much as possible, it works well with horizonal text but chokes on vertical.)
     }
   }
 }
